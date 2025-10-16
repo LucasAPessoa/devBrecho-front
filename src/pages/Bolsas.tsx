@@ -6,7 +6,7 @@ import {
     Heading,
     Input,
     Select,
-    Textarea, // Adicionado para o campo de códigos
+    Textarea,
     Modal,
     ModalBody,
     ModalCloseButton,
@@ -27,17 +27,24 @@ import {
     IconButton,
     NumberInput,
     NumberInputField,
-    Wrap, // Adicionado para exibir as tags de peças
-    Tag, // Adicionado para exibir as tags de peças
+    Wrap,
+    Tag,
 } from "@chakra-ui/react";
 import { useForm, Controller } from "react-hook-form";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { api } from "../services/api";
 
-// Tipagens atualizadas
+// --- Tipagens Atualizadas ---
 interface Peca {
     pecaCadastradaId: number;
     codigoDaPeca: string;
+}
+
+// Adicionado 'codigo' à interface da Fornecedora
+interface Fornecedora {
+    fornecedoraId: number;
+    codigo: string | null;
+    nome: string;
 }
 
 interface Bolsa {
@@ -46,16 +53,15 @@ interface Bolsa {
     observacoes: string | null;
     fornecedoraId: number;
     setorId: number;
-    fornecedora: { nome: string };
+    fornecedora: {
+        nome: string;
+        codigo: string | null; // Adicionado 'codigo' aqui também
+    };
     setor: { nome: string };
-    pecasCadastradas: Peca[]; // Inclui a relação com as peças
+    pecasCadastradas: Peca[];
 }
 interface Setor {
     setorId: number;
-    nome: string;
-}
-interface Fornecedora {
-    fornecedoraId: number;
     nome: string;
 }
 
@@ -64,7 +70,7 @@ type BolsaFormData = {
     observacoes?: string;
     fornecedoraId: number;
     setorId: number;
-    codigosDePeca?: string; // Campo para o Textarea com os códigos
+    codigosDePeca?: string;
 };
 
 export function Bolsas() {
@@ -92,9 +98,7 @@ export function Bolsas() {
         }
     }
 
-    // Função de salvar modificada para processar os códigos das peças
     async function handleSave(data: BolsaFormData) {
-        // Converte a string de códigos (separados por quebra de linha) em um array
         const codigosArray =
             data.codigosDePeca
                 ?.split("\n")
@@ -107,7 +111,7 @@ export function Bolsas() {
                 data.quantidadeDePecasSemCadastro
             ),
             observacoes: data.observacoes,
-            codigosDePeca: codigosArray, // Envia o array para a API
+            codigosDePeca: codigosArray,
         };
 
         try {
@@ -140,7 +144,6 @@ export function Bolsas() {
         }
     }
 
-    // Função de abrir o modal modificada para lidar com os códigos
     function openModal(bolsa: Bolsa | null = null) {
         setSelectedBolsa(bolsa);
         if (bolsa) {
@@ -151,7 +154,6 @@ export function Bolsas() {
                 bolsa.quantidadeDePecasSemCadastro
             );
             setValue("observacoes", bolsa.observacoes || "");
-            // Converte o array de peças em uma string para preencher o textarea
             const codigosString = bolsa.pecasCadastradas
                 .map((p) => p.codigoDaPeca)
                 .join("\n");
@@ -180,14 +182,16 @@ export function Bolsas() {
                 </Button>
             </Flex>
 
+            {/* --- TABELA ATUALIZADA --- */}
             <Table variant="simple">
                 <Thead>
                     <Tr>
                         <Th>ID</Th>
                         <Th>Setor</Th>
+                        <Th>Cód. Fornecedora</Th> {/* <-- NOVA COLUNA */}
                         <Th>Fornecedora</Th>
                         <Th>Peças Cadastradas</Th>
-                        <Th>Observações</Th> {/* <-- NOVA COLUNA */}
+                        <Th>Observações</Th>
                         <Th isNumeric>Ações</Th>
                     </Tr>
                 </Thead>
@@ -196,6 +200,8 @@ export function Bolsas() {
                         <Tr key={b.bolsaId}>
                             <Td>{b.bolsaId}</Td>
                             <Td>{b.setor.nome}</Td>
+                            <Td>{b.fornecedora.codigo || "N/A"}</Td>{" "}
+                            {/* <-- NOVO CAMPO */}
                             <Td>{b.fornecedora.nome}</Td>
                             <Td>
                                 <Wrap>
@@ -209,8 +215,7 @@ export function Bolsas() {
                                         "Nenhuma"}
                                 </Wrap>
                             </Td>
-                            <Td>{b.observacoes || "N/A"}</Td>{" "}
-                            {/* <-- NOVO CAMPO */}
+                            <Td>{b.observacoes || "N/A"}</Td>
                             <Td isNumeric>
                                 <HStack spacing={2} justify="flex-end">
                                     <IconButton
@@ -231,6 +236,7 @@ export function Bolsas() {
                 </Tbody>
             </Table>
 
+            {/* --- MODAL ATUALIZADO --- */}
             <Modal isOpen={isOpen} onClose={resetModalAndFetch} size="xl">
                 <ModalOverlay />
                 <ModalContent>
@@ -265,6 +271,8 @@ export function Bolsas() {
                                             key={f.fornecedoraId}
                                             value={f.fornecedoraId}
                                         >
+                                            {/* TEXTO ATUALIZADO PARA MOSTRAR O CÓDIGO */}
+                                            {f.codigo ? `${f.codigo} - ` : ""}
                                             {f.nome}
                                         </option>
                                     ))}
@@ -282,7 +290,6 @@ export function Bolsas() {
                                     placeholder="Observações (opcional)"
                                     {...register("observacoes")}
                                 />
-                                {/* CAMPO ADICIONADO PARA OS CÓDIGOS DAS PEÇAS */}
                                 <Textarea
                                     placeholder="Cole a lista de códigos das peças aqui, um por linha."
                                     {...register("codigosDePeca")}
