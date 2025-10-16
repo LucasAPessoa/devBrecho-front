@@ -31,12 +31,14 @@ import { api } from "../services/api";
 // Tipagem dos dados
 interface Fornecedora {
     fornecedoraId: number;
+    codigo: string;
     nome: string;
     telefone?: string;
 }
 
 // Tipagem para o formulário
 type FornecedoraFormData = {
+    codigo: string;
     nome: string;
     telefone?: string;
 };
@@ -99,14 +101,16 @@ export function Fornecedoras() {
     function openModal(fornecedora: Fornecedora | null = null) {
         setSelectedFornecedora(fornecedora);
         if (fornecedora) {
+            setValue("codigo", fornecedora.codigo);
             setValue("nome", fornecedora.nome);
             setValue("telefone", fornecedora.telefone);
         }
         onOpen();
     }
 
+    // Atualize a função resetModalAndFetch
     function resetModalAndFetch() {
-        reset({ nome: "", telefone: "" });
+        reset({ codigo: "", nome: "", telefone: "" });
         setSelectedFornecedora(null);
         onClose();
         fetchFornecedoras();
@@ -129,6 +133,7 @@ export function Fornecedoras() {
                 <Thead>
                     <Tr>
                         <Th>ID</Th>
+                        <Th>Código</Th>
                         <Th>Nome</Th>
                         <Th>Telefone</Th>
                         <Th isNumeric>Ações</Th>
@@ -138,25 +143,10 @@ export function Fornecedoras() {
                     {fornecedoras.map((f) => (
                         <Tr key={f.fornecedoraId}>
                             <Td>{f.fornecedoraId}</Td>
+                            <Td>{f.codigo || "N/A"}</Td>
                             <Td>{f.nome}</Td>
                             <Td>{f.telefone || "N/A"}</Td>
-                            <Td isNumeric>
-                                <HStack spacing={2} justify="flex-end">
-                                    <IconButton
-                                        aria-label="Editar"
-                                        icon={<FaEdit />}
-                                        onClick={() => openModal(f)}
-                                    />
-                                    <IconButton
-                                        aria-label="Deletar"
-                                        icon={<FaTrash />}
-                                        colorScheme="red"
-                                        onClick={() =>
-                                            handleDelete(f.fornecedoraId)
-                                        }
-                                    />
-                                </HStack>
-                            </Td>
+                            <Td isNumeric></Td>
                         </Tr>
                     ))}
                 </Tbody>
@@ -173,6 +163,10 @@ export function Fornecedoras() {
                     <form onSubmit={handleSubmit(handleSave)}>
                         <ModalBody>
                             <VStack spacing={4}>
+                                <Input
+                                    placeholder="Código (opcional)"
+                                    {...register("codigo")}
+                                />{" "}
                                 <Input
                                     placeholder="Nome da Fornecedora"
                                     {...register("nome", { required: true })}
