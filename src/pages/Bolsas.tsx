@@ -187,6 +187,7 @@ export function Bolsas() {
                         <Th>Setor</Th>
                         <Th>Fornecedora</Th>
                         <Th>Peças Cadastradas</Th>
+                        <Th>Observações</Th> {/* <-- NOVA COLUNA */}
                         <Th isNumeric>Ações</Th>
                     </Tr>
                 </Thead>
@@ -198,19 +199,18 @@ export function Bolsas() {
                             <Td>{b.fornecedora.nome}</Td>
                             <Td>
                                 <Wrap>
-                                    {/* Adicionamos o '?' antes do .map */}
                                     {b.pecasCadastradas?.map((p) => (
                                         <Tag key={p.pecaCadastradaId} size="sm">
                                             {p.codigoDaPeca}
                                         </Tag>
                                     ))}
-
-                                    {/* Opcional: Mostra uma mensagem se não houver peças */}
                                     {(!b.pecasCadastradas ||
                                         b.pecasCadastradas.length === 0) &&
                                         "Nenhuma"}
                                 </Wrap>
                             </Td>
+                            <Td>{b.observacoes || "N/A"}</Td>{" "}
+                            {/* <-- NOVO CAMPO */}
                             <Td isNumeric>
                                 <HStack spacing={2} justify="flex-end">
                                     <IconButton
