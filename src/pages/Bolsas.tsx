@@ -6,7 +6,7 @@ import {
     Heading,
     Input,
     Select,
-    Textarea,
+    Textarea, // Adicionado para o campo de códigos
     Modal,
     ModalBody,
     ModalCloseButton,
@@ -27,12 +27,19 @@ import {
     IconButton,
     NumberInput,
     NumberInputField,
+    Wrap, // Adicionado para exibir as tags de peças
+    Tag, // Adicionado para exibir as tags de peças
 } from "@chakra-ui/react";
 import { useForm, Controller } from "react-hook-form";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { api } from "../services/api";
 
-// Tipagens
+// Tipagens atualizadas
+interface Peca {
+    pecaCadastradaId: number;
+    codigoDaPeca: string;
+}
+
 interface Bolsa {
     bolsaId: number;
     quantidadeDePecasSemCadastro: number;
@@ -41,6 +48,7 @@ interface Bolsa {
     setorId: number;
     fornecedora: { nome: string };
     setor: { nome: string };
+    pecasCadastradas: Peca[]; // Inclui a relação com as peças
 }
 interface Setor {
     setorId: number;
@@ -56,6 +64,7 @@ type BolsaFormData = {
     observacoes?: string;
     fornecedoraId: number;
     setorId: number;
+    codigosDePeca?: string; // Campo para o Textarea com os códigos
 };
 
 export function Bolsas() {
@@ -83,15 +92,24 @@ export function Bolsas() {
         }
     }
 
+    // Função de salvar modificada para processar os códigos das peças
     async function handleSave(data: BolsaFormData) {
+        // Converte a string de códigos (separados por quebra de linha) em um array
+        const codigosArray =
+            data.codigosDePeca
+                ?.split("\n")
+                .filter((codigo) => codigo.trim() !== "") || [];
+
         const payload = {
-            ...data,
             setorId: Number(data.setorId),
             fornecedoraId: Number(data.fornecedoraId),
             quantidadeDePecasSemCadastro: Number(
                 data.quantidadeDePecasSemCadastro
             ),
+            observacoes: data.observacoes,
+            codigosDePeca: codigosArray, // Envia o array para a API
         };
+
         try {
             if (selectedBolsa) {
                 await api.put(`/bolsa/${selectedBolsa.bolsaId}`, payload);
@@ -102,7 +120,7 @@ export function Bolsas() {
             } else {
                 await api.post("/bolsa", payload);
                 toast({
-                    title: "Bolsa criada com sucesso!",
+                    title: "Bolsa e peças criadas com sucesso!",
                     status: "success",
                 });
             }
@@ -122,6 +140,7 @@ export function Bolsas() {
         }
     }
 
+    // Função de abrir o modal modificada para lidar com os códigos
     function openModal(bolsa: Bolsa | null = null) {
         setSelectedBolsa(bolsa);
         if (bolsa) {
@@ -132,6 +151,11 @@ export function Bolsas() {
                 bolsa.quantidadeDePecasSemCadastro
             );
             setValue("observacoes", bolsa.observacoes || "");
+            // Converte o array de peças em uma string para preencher o textarea
+            const codigosString = bolsa.pecasCadastradas
+                .map((p) => p.codigoDaPeca)
+                .join("\n");
+            setValue("codigosDePeca", codigosString);
         }
         onOpen();
     }
@@ -162,7 +186,7 @@ export function Bolsas() {
                         <Th>ID</Th>
                         <Th>Setor</Th>
                         <Th>Fornecedora</Th>
-                        <Th>Peças s/ Cadastro</Th>
+                        <Th>Peças Cadastradas</Th>
                         <Th isNumeric>Ações</Th>
                     </Tr>
                 </Thead>
@@ -172,7 +196,17 @@ export function Bolsas() {
                             <Td>{b.bolsaId}</Td>
                             <Td>{b.setor.nome}</Td>
                             <Td>{b.fornecedora.nome}</Td>
-                            <Td>{b.quantidadeDePecasSemCadastro}</Td>
+                            <Td>
+                                <Wrap>
+                                    {b.pecasCadastradas.map((p) => (
+                                        <Tag key={p.pecaCadastradaId} size="sm">
+                                            {p.codigoDaPeca}
+                                        </Tag>
+                                    ))}
+                                    {b.pecasCadastradas.length === 0 &&
+                                        "Nenhuma"}
+                                </Wrap>
+                            </Td>
                             <Td isNumeric>
                                 <HStack spacing={2} justify="flex-end">
                                     <IconButton
@@ -193,7 +227,7 @@ export function Bolsas() {
                 </Tbody>
             </Table>
 
-            <Modal isOpen={isOpen} onClose={resetModalAndFetch}>
+            <Modal isOpen={isOpen} onClose={resetModalAndFetch} size="xl">
                 <ModalOverlay />
                 <ModalContent>
                     <ModalHeader>
@@ -243,6 +277,12 @@ export function Bolsas() {
                                 <Textarea
                                     placeholder="Observações (opcional)"
                                     {...register("observacoes")}
+                                />
+                                {/* CAMPO ADICIONADO PARA OS CÓDIGOS DAS PEÇAS */}
+                                <Textarea
+                                    placeholder="Cole a lista de códigos das peças aqui, um por linha."
+                                    {...register("codigosDePeca")}
+                                    rows={10}
                                 />
                             </VStack>
                         </ModalBody>
