@@ -198,12 +198,16 @@ export function Bolsas() {
                             <Td>{b.fornecedora.nome}</Td>
                             <Td>
                                 <Wrap>
-                                    {b.pecasCadastradas.map((p) => (
+                                    {/* Adicionamos o '?' antes do .map */}
+                                    {b.pecasCadastradas?.map((p) => (
                                         <Tag key={p.pecaCadastradaId} size="sm">
                                             {p.codigoDaPeca}
                                         </Tag>
                                     ))}
-                                    {b.pecasCadastradas.length === 0 &&
+
+                                    {/* Opcional: Mostra uma mensagem se não houver peças */}
+                                    {(!b.pecasCadastradas ||
+                                        b.pecasCadastradas.length === 0) &&
                                         "Nenhuma"}
                                 </Wrap>
                             </Td>
