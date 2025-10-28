@@ -183,20 +183,22 @@ export function Bolsas() {
 
     function formatDate(date: string): string {
         const limitDate = new Date(2022, 0, 1);
-
         const inputDate = new Date(date);
 
-        if (isNaN(inputDate.getTime())) {
+        if (isNaN(inputDate.getTime()) || inputDate < limitDate) {
             return "";
         }
 
-        if (inputDate < limitDate) {
-            return "";
-        }
-
-        return inputDate.toLocaleDateString("pt-BR");
+        return inputDate.toLocaleDateString("pt-BR", {
+            timeZone: "UTC",
+        });
     }
+
     function toInputDate(date: string | Date): string {
+        if (typeof date === "string") {
+            return date.split("T")[0];
+        }
+
         const d = new Date(date);
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -206,20 +208,19 @@ export function Bolsas() {
 
     function calculatePrazo(dateMnsg: string) {
         const limitDate = new Date(2022, 0, 1);
-
         const inputDate = new Date(dateMnsg);
 
-        if (isNaN(inputDate.getTime())) {
+        if (isNaN(inputDate.getTime()) || inputDate < limitDate) {
             return "";
         }
 
-        if (inputDate < limitDate) {
-            return "";
-        }
+        const prazoDate = new Date(inputDate);
+        prazoDate.setDate(prazoDate.getDate() + 15);
 
-        return inputDate.toLocaleDateString();
+        return prazoDate.toLocaleDateString("pt-BR", {
+            timeZone: "UTC",
+        });
     }
-
     return (
         <Box>
             <Flex justify="space-between" align="center" mb={6}>
