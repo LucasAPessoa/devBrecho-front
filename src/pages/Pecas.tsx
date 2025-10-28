@@ -56,8 +56,8 @@ export function Pecas() {
     async function fetchData() {
         try {
             const [pecasRes, bolsasRes] = await Promise.all([
-                api.get("/peca"),
-                api.get("/bolsa"),
+                api.get("/pecaCadastrada"),
+                api.get("/bolsas"),
             ]);
             setPecas(pecasRes.data);
             setBolsas(bolsasRes.data);
@@ -71,7 +71,7 @@ export function Pecas() {
         try {
             if (selectedPeca) {
                 await api.put(
-                    `/peca/${selectedPeca.pecaCadastradaId}`,
+                    `/pecaCadastrada/${selectedPeca.pecaCadastradaId}`,
                     payload
                 );
                 toast({
@@ -79,7 +79,7 @@ export function Pecas() {
                     status: "success",
                 });
             } else {
-                await api.post("/peca", payload);
+                await api.post("/pecaCadastrada", payload);
                 toast({ title: "Peça criada com sucesso!", status: "success" });
             }
             resetModalAndFetch();
@@ -90,7 +90,7 @@ export function Pecas() {
 
     async function handleDelete(id: number) {
         try {
-            await api.delete(`/peca/${id}`);
+            await api.delete(`/pecaCadastrada/${id}`);
             toast({ title: "Peça deletada com sucesso!", status: "warning" });
             fetchData();
         } catch (error) {

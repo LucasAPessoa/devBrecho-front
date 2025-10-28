@@ -28,13 +28,11 @@ import { useForm } from "react-hook-form";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { api } from "../services/api";
 
-// Tipagem dos dados
 interface Setor {
     setorId: number;
     nome: string;
 }
 
-// Tipagem para o formulário
 type SetorFormData = {
     nome: string;
 };
@@ -47,10 +45,9 @@ export function Setores() {
     const { register, handleSubmit, reset, setValue } =
         useForm<SetorFormData>();
 
-    // Função para buscar os dados da API
     async function fetchSetores() {
         try {
-            const response = await api.get("/setor");
+            const response = await api.get("/setores");
             setSetores(response.data);
         } catch (error) {
             toast({
@@ -62,19 +59,16 @@ export function Setores() {
         }
     }
 
-    // Função para lidar com a criação ou atualização
     async function handleSaveSetor(data: SetorFormData) {
         try {
             if (selectedSetor) {
-                // Atualizar
-                await api.put(`/setor/${selectedSetor.setorId}`, data);
+                await api.put(`/setores/${selectedSetor.setorId}`, data);
                 toast({
                     title: "Setor atualizado com sucesso!",
                     status: "success",
                 });
             } else {
-                // Criar
-                await api.post("/setor", data);
+                await api.post("/setores", data);
                 toast({
                     title: "Setor criado com sucesso!",
                     status: "success",
@@ -86,18 +80,16 @@ export function Setores() {
         }
     }
 
-    // Função para deletar
     async function handleDeleteSetor(id: number) {
         try {
-            await api.delete(`/setor/${id}`);
+            await api.delete(`/setores/${id}`);
             toast({ title: "Setor deletado com sucesso!", status: "warning" });
-            fetchSetores(); // Atualiza a lista
+            fetchSetores();
         } catch (error) {
             toast({ title: "Erro ao deletar setor.", status: "error" });
         }
     }
 
-    // Funções de controle do Modal
     function openModal(setor: Setor | null = null) {
         setSelectedSetor(setor);
         if (setor) {

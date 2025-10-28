@@ -54,7 +54,7 @@ export function Fornecedoras() {
 
     async function fetchFornecedoras() {
         try {
-            const response = await api.get("/fornecedora");
+            const response = await api.get("/fornecedoras");
             setFornecedoras(response.data);
         } catch (error) {
             toast({ title: "Erro ao buscar fornecedoras.", status: "error" });
@@ -65,7 +65,7 @@ export function Fornecedoras() {
         try {
             if (selectedFornecedora) {
                 await api.put(
-                    `/fornecedora/${selectedFornecedora.fornecedoraId}`,
+                    `/fornecedoras/${selectedFornecedora.fornecedoraId}`,
                     data
                 );
                 toast({
@@ -73,7 +73,7 @@ export function Fornecedoras() {
                     status: "success",
                 });
             } else {
-                await api.post("/fornecedora", data);
+                await api.post("/fornecedoras", data);
                 toast({
                     title: "Fornecedora criada com sucesso!",
                     status: "success",
@@ -87,7 +87,7 @@ export function Fornecedoras() {
 
     async function handleDelete(id: number) {
         try {
-            await api.delete(`/fornecedora/${id}`);
+            await api.delete(`/fornecedoras/${id}`);
             toast({
                 title: "Fornecedora deletada com sucesso!",
                 status: "warning",
