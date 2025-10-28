@@ -5,6 +5,8 @@ import {
     Flex,
     Heading,
     Input,
+    FormControl,
+    FormLabel,
     Select,
     Textarea,
     Modal,
@@ -31,16 +33,15 @@ import {
     Tag,
 } from "@chakra-ui/react";
 import { useForm, Controller } from "react-hook-form";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaSortUp, FaSortDown } from "react-icons/fa";
 import { api } from "../services/api";
+import { useSortableData } from "../hooks/useSortableData";
 
-// --- Tipagens Atualizadas ---
 interface Peca {
     pecaCadastradaId: number;
     codigoDaPeca: string;
 }
 
-// Adicionado 'codigo' à interface da Fornecedora
 interface Fornecedora {
     fornecedoraId: number;
     codigo: string | null;
@@ -55,10 +56,11 @@ interface Bolsa {
     setorId: number;
     fornecedora: {
         nome: string;
-        codigo: string | null; // Adicionado 'codigo' aqui também
+        codigo: string | null;
     };
     setor: { nome: string };
     pecasCadastradas: Peca[];
+    dataMensagem: string;
 }
 interface Setor {
     setorId: number;
@@ -71,6 +73,7 @@ type BolsaFormData = {
     fornecedoraId: number;
     setorId: number;
     codigosDePeca?: string;
+    dataMensagem: string;
 };
 
 export function Bolsas() {
@@ -83,12 +86,14 @@ export function Bolsas() {
     const { register, handleSubmit, reset, setValue, control } =
         useForm<BolsaFormData>();
 
+    const { sortedData, requestSort, sortConfig } = useSortableData(bolsas);
+
     async function fetchData() {
         try {
             const [bolsasRes, setoresRes, fornecedorasRes] = await Promise.all([
-                api.get("/bolsa"),
-                api.get("/setor"),
-                api.get("/fornecedora"),
+                api.get("/bolsas"),
+                api.get("/setores"),
+                api.get("/fornecedoras"),
             ]);
             setBolsas(bolsasRes.data);
             setSetores(setoresRes.data);
@@ -111,23 +116,25 @@ export function Bolsas() {
                 data.quantidadeDePecasSemCadastro
             ),
             observacoes: data.observacoes,
-            codigosDePeca: codigosArray,
+            codigosDasPecas: codigosArray,
+            dataMensagem: data.dataMensagem,
         };
 
         try {
             if (selectedBolsa) {
-                await api.put(`/bolsa/${selectedBolsa.bolsaId}`, payload);
+                await api.put(`/bolsas/${selectedBolsa.bolsaId}`, payload);
                 toast({
                     title: "Bolsa atualizada com sucesso!",
                     status: "success",
                 });
             } else {
-                await api.post("/bolsa", payload);
+                await api.post("/bolsas", payload);
                 toast({
                     title: "Bolsa e peças criadas com sucesso!",
                     status: "success",
                 });
             }
+
             resetModalAndFetch();
         } catch (error) {
             toast({ title: "Erro ao salvar bolsa.", status: "error" });
@@ -136,7 +143,7 @@ export function Bolsas() {
 
     async function handleDelete(id: number) {
         try {
-            await api.delete(`/bolsa/${id}`);
+            await api.delete(`/bolsas/${id}`);
             toast({ title: "Bolsa deletada com sucesso!", status: "warning" });
             fetchData();
         } catch (error) {
@@ -158,6 +165,7 @@ export function Bolsas() {
                 .map((p) => p.codigoDaPeca)
                 .join("\n");
             setValue("codigosDePeca", codigosString);
+            setValue("dataMensagem", toInputDate(bolsa.dataMensagem));
         }
         onOpen();
     }
@@ -173,6 +181,45 @@ export function Bolsas() {
         fetchData();
     }, []);
 
+    function formatDate(date: string): string {
+        const limitDate = new Date(2022, 0, 1);
+
+        const inputDate = new Date(date);
+
+        if (isNaN(inputDate.getTime())) {
+            return "";
+        }
+
+        if (inputDate < limitDate) {
+            return "";
+        }
+
+        return inputDate.toLocaleDateString("pt-BR");
+    }
+    function toInputDate(date: string | Date): string {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    function calculatePrazo(dateMnsg: string) {
+        const limitDate = new Date(2022, 0, 1);
+
+        const inputDate = new Date(dateMnsg);
+
+        if (isNaN(inputDate.getTime())) {
+            return "";
+        }
+
+        if (inputDate < limitDate) {
+            return "";
+        }
+
+        return inputDate.toLocaleDateString();
+    }
+
     return (
         <Box>
             <Flex justify="space-between" align="center" mb={6}>
@@ -182,26 +229,110 @@ export function Bolsas() {
                 </Button>
             </Flex>
 
-            {/* --- TABELA ATUALIZADA --- */}
             <Table variant="simple">
                 <Thead>
                     <Tr>
-                        <Th>ID</Th>
-                        <Th>Setor</Th>
-                        <Th>Cód. Fornecedora</Th> {/* <-- NOVA COLUNA */}
-                        <Th>Fornecedora</Th>
-                        <Th>Peças Cadastradas</Th>
-                        <Th>Observações</Th>
-                        <Th isNumeric>Ações</Th>
+                        {(() => {
+                            const SortIcon = ({
+                                columnKey,
+                            }: {
+                                columnKey: string;
+                            }) => {
+                                if (sortConfig.key !== columnKey) return null;
+                                return sortConfig.direction === "asc" ? (
+                                    <FaSortUp
+                                        style={{
+                                            display: "inline",
+                                            marginLeft: "4px",
+                                        }}
+                                    />
+                                ) : (
+                                    <FaSortDown
+                                        style={{
+                                            display: "inline",
+                                            marginLeft: "4px",
+                                        }}
+                                    />
+                                );
+                            };
+
+                            return (
+                                <>
+                                    <Th
+                                        cursor="pointer"
+                                        userSelect="none"
+                                        onClick={() => requestSort("bolsaId")}
+                                    >
+                                        ID <SortIcon columnKey="bolsaId" />
+                                    </Th>
+                                    <Th
+                                        cursor="pointer"
+                                        userSelect="none"
+                                        onClick={() =>
+                                            requestSort("setor.nome")
+                                        }
+                                    >
+                                        Setor{" "}
+                                        <SortIcon columnKey="setor.nome" />
+                                    </Th>
+                                    <Th
+                                        cursor="pointer"
+                                        userSelect="none"
+                                        onClick={() =>
+                                            requestSort("fornecedora.codigo")
+                                        }
+                                    >
+                                        Cód. Fornecedora{" "}
+                                        <SortIcon columnKey="fornecedora.codigo" />
+                                    </Th>
+                                    <Th
+                                        cursor="pointer"
+                                        userSelect="none"
+                                        onClick={() =>
+                                            requestSort("fornecedora.nome")
+                                        }
+                                    >
+                                        Fornecedora{" "}
+                                        <SortIcon columnKey="fornecedora.nome" />
+                                    </Th>
+
+                                    <Th>Peças Cadastradas</Th>
+
+                                    <Th
+                                        cursor="pointer"
+                                        userSelect="none"
+                                        onClick={() =>
+                                            requestSort("dataMensagem")
+                                        }
+                                    >
+                                        Data Mensagem{" "}
+                                        <SortIcon columnKey="dataMensagem" />
+                                    </Th>
+                                    <Th
+                                        cursor="pointer"
+                                        userSelect="none"
+                                        onClick={() =>
+                                            requestSort("dataMensagem")
+                                        }
+                                    >
+                                        Prazo{" "}
+                                        <SortIcon columnKey="dataMensagem" />
+                                    </Th>
+
+                                    <Th>Observações</Th>
+
+                                    <Th isNumeric>Ações</Th>
+                                </>
+                            );
+                        })()}
                     </Tr>
                 </Thead>
                 <Tbody>
-                    {bolsas.map((b) => (
+                    {sortedData.map((b) => (
                         <Tr key={b.bolsaId}>
                             <Td>{b.bolsaId}</Td>
                             <Td>{b.setor.nome}</Td>
                             <Td>{b.fornecedora.codigo || "N/A"}</Td>{" "}
-                            {/* <-- NOVO CAMPO */}
                             <Td>{b.fornecedora.nome}</Td>
                             <Td>
                                 <Wrap>
@@ -215,6 +346,8 @@ export function Bolsas() {
                                         "Nenhuma"}
                                 </Wrap>
                             </Td>
+                            <Td>{formatDate(b.dataMensagem)}</Td>
+                            <Td>{calculatePrazo(b.dataMensagem)}</Td>
                             <Td>{b.observacoes || "N/A"}</Td>
                             <Td isNumeric>
                                 <HStack spacing={2} justify="flex-end">
@@ -236,7 +369,6 @@ export function Bolsas() {
                 </Tbody>
             </Table>
 
-            {/* --- MODAL ATUALIZADO --- */}
             <Modal isOpen={isOpen} onClose={resetModalAndFetch} size="xl">
                 <ModalOverlay />
                 <ModalContent>
@@ -271,7 +403,6 @@ export function Bolsas() {
                                             key={f.fornecedoraId}
                                             value={f.fornecedoraId}
                                         >
-                                            {/* TEXTO ATUALIZADO PARA MOSTRAR O CÓDIGO */}
                                             {f.codigo ? `${f.codigo} - ` : ""}
                                             {f.nome}
                                         </option>
@@ -286,6 +417,18 @@ export function Bolsas() {
                                         </NumberInput>
                                     )}
                                 />
+                                <FormControl isRequired>
+                                    <FormLabel htmlFor="dataMensagem">
+                                        Data da Mensagem
+                                    </FormLabel>
+                                    <Input
+                                        id="dataMensagem"
+                                        type="date"
+                                        {...register("dataMensagem", {
+                                            required: true,
+                                        })}
+                                    />
+                                </FormControl>
                                 <Textarea
                                     placeholder="Observações (opcional)"
                                     {...register("observacoes")}
