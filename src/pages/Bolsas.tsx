@@ -416,7 +416,7 @@ export function Bolsas() {
                             </Td>
                             <Td>{b.observacoes || "N/A"}</Td>
                             <Td isNumeric>
-                                <HStack spacing={2} justify="flex-end">
+                                <HStack spacing={4} justify="flex-end">
                                     <IconButton
                                         aria-label="Editar"
                                         icon={<FaEdit />}
