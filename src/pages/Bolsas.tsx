@@ -33,7 +33,14 @@ import {
     Tag,
 } from "@chakra-ui/react";
 import { useForm, Controller } from "react-hook-form";
-import { FaEdit, FaTrash, FaSortUp, FaSortDown } from "react-icons/fa";
+import {
+    FaEdit,
+    FaTrash,
+    FaSortUp,
+    FaSortDown,
+    FaArrowAltCircleUp,
+    FaBoxOpen,
+} from "react-icons/fa";
 import { api } from "../services/api";
 import { useSortableData } from "../hooks/useSortableData";
 
@@ -61,6 +68,8 @@ interface Bolsa {
     setor: { nome: string };
     pecasCadastradas: Peca[];
     dataMensagem: string;
+    statusDevolvida: boolean;
+    statusDoada: boolean;
 }
 interface Setor {
     setorId: number;
@@ -149,6 +158,54 @@ export function Bolsas() {
         } catch (error) {
             toast({ title: "Erro ao deletar bolsa.", status: "error" });
         }
+    }
+
+    async function handleSetStatusDevolvida(bolsaId: number) {
+        try {
+            const payload = {
+                statusDevolvida: true,
+                statusDoada: null,
+            };
+            await api.patch(`/bolsas/${bolsaId}/status`, payload);
+            toast({
+                title: "Status da bolsa alterado com sucesso!",
+                status: "success",
+            });
+            fetchData();
+        } catch {
+            toast({
+                title: "Erro ao alterar status da bolsa.",
+                status: "error",
+            });
+        }
+    }
+
+    async function handleSetStatusDoada(bolsaId: number) {
+        try {
+            const payload = {
+                statusDevolvida: null,
+                statusDoada: true,
+            };
+            await api.patch(`/bolsas/${bolsaId}/status`, payload);
+            toast({
+                title: "Status da bolsa alterado com sucesso!",
+                status: "success",
+            });
+            fetchData();
+        } catch {
+            toast({
+                title: "Erro ao alterar status da bolsa.",
+                status: "error",
+            });
+        }
+    }
+
+    function handleShowStatus(statusDevolvida: boolean, statusDoada: boolean) {
+        return statusDevolvida === true
+            ? "DEVOLVIDA"
+            : statusDoada === true
+            ? "DOADA"
+            : null;
     }
 
     function openModal(bolsa: Bolsa | null = null) {
@@ -320,6 +377,8 @@ export function Bolsas() {
                                         <SortIcon columnKey="dataMensagem" />
                                     </Th>
 
+                                    <Th>Status</Th>
+
                                     <Th>Observações</Th>
 
                                     <Th isNumeric>Ações</Th>
@@ -349,6 +408,12 @@ export function Bolsas() {
                             </Td>
                             <Td>{formatDate(b.dataMensagem)}</Td>
                             <Td>{calculatePrazo(b.dataMensagem)}</Td>
+                            <Td>
+                                {handleShowStatus(
+                                    b.statusDevolvida,
+                                    b.statusDoada
+                                )}
+                            </Td>
                             <Td>{b.observacoes || "N/A"}</Td>
                             <Td isNumeric>
                                 <HStack spacing={2} justify="flex-end">
@@ -362,6 +427,23 @@ export function Bolsas() {
                                         icon={<FaTrash />}
                                         colorScheme="red"
                                         onClick={() => handleDelete(b.bolsaId)}
+                                    />
+
+                                    <IconButton
+                                        aria-label="Devolver"
+                                        icon={<FaArrowAltCircleUp />}
+                                        colorScheme="blue"
+                                        onClick={() =>
+                                            handleSetStatusDevolvida(b.bolsaId)
+                                        }
+                                    />
+                                    <IconButton
+                                        aria-label="Doar"
+                                        icon={<FaBoxOpen />}
+                                        colorScheme="blue"
+                                        onClick={() =>
+                                            handleSetStatusDoada(b.bolsaId)
+                                        }
                                     />
                                 </HStack>
                             </Td>
