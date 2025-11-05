@@ -164,7 +164,7 @@ export function Bolsas() {
         try {
             const payload = {
                 statusDevolvida: true,
-                statusDoada: null,
+                statusDoada: false,
             };
             await api.patch(`/bolsas/${bolsaId}/status`, payload);
             toast({
@@ -183,7 +183,7 @@ export function Bolsas() {
     async function handleSetStatusDoada(bolsaId: number) {
         try {
             const payload = {
-                statusDevolvida: null,
+                statusDevolvida: false,
                 statusDoada: true,
             };
             await api.patch(`/bolsas/${bolsaId}/status`, payload);
