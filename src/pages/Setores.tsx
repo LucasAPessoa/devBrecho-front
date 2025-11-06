@@ -121,7 +121,6 @@ export function Setores() {
             <Table variant="simple">
                 <Thead>
                     <Tr>
-                        <Th>ID</Th>
                         <Th>Nome</Th>
                         <Th isNumeric>Ações</Th>
                     </Tr>
@@ -129,7 +128,6 @@ export function Setores() {
                 <Tbody>
                     {setores.map((setor) => (
                         <Tr key={setor.setorId}>
-                            <Td>{setor.setorId}</Td>
                             <Td>{setor.nome}</Td>
                             <Td isNumeric>
                                 <HStack spacing={2} justify="flex-end">

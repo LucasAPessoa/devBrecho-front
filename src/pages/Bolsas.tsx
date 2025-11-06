@@ -160,32 +160,11 @@ export function Bolsas() {
         }
     }
 
-    async function handleSetStatusDevolvida(bolsaId: number) {
+    async function handleSetStatus(
+        bolsaId: number,
+        payload: { statusDevolvida: boolean; statusDoada: boolean }
+    ) {
         try {
-            const payload = {
-                statusDevolvida: true,
-                statusDoada: false,
-            };
-            await api.patch(`/bolsas/${bolsaId}/status`, payload);
-            toast({
-                title: "Status da bolsa alterado com sucesso!",
-                status: "success",
-            });
-            fetchData();
-        } catch {
-            toast({
-                title: "Erro ao alterar status da bolsa.",
-                status: "error",
-            });
-        }
-    }
-
-    async function handleSetStatusDoada(bolsaId: number) {
-        try {
-            const payload = {
-                statusDevolvida: false,
-                statusDoada: true,
-            };
             await api.patch(`/bolsas/${bolsaId}/status`, payload);
             toast({
                 title: "Status da bolsa alterado com sucesso!",
@@ -319,13 +298,6 @@ export function Bolsas() {
                                     <Th
                                         cursor="pointer"
                                         userSelect="none"
-                                        onClick={() => requestSort("bolsaId")}
-                                    >
-                                        ID <SortIcon columnKey="bolsaId" />
-                                    </Th>
-                                    <Th
-                                        cursor="pointer"
-                                        userSelect="none"
                                         onClick={() =>
                                             requestSort("setor.nome")
                                         }
@@ -355,7 +327,7 @@ export function Bolsas() {
                                     </Th>
 
                                     <Th>Peças Cadastradas</Th>
-
+                                    <Th>Total de Peças</Th>
                                     <Th
                                         cursor="pointer"
                                         userSelect="none"
@@ -366,6 +338,7 @@ export function Bolsas() {
                                         Data Mensagem{" "}
                                         <SortIcon columnKey="dataMensagem" />
                                     </Th>
+
                                     <Th
                                         cursor="pointer"
                                         userSelect="none"
@@ -390,7 +363,6 @@ export function Bolsas() {
                 <Tbody>
                     {sortedData.map((b) => (
                         <Tr key={b.bolsaId}>
-                            <Td>{b.bolsaId}</Td>
                             <Td>{b.setor.nome}</Td>
                             <Td>{b.fornecedora.codigo || "N/A"}</Td>{" "}
                             <Td>{b.fornecedora.nome}</Td>
@@ -406,6 +378,10 @@ export function Bolsas() {
                                         "Nenhuma"}
                                 </Wrap>
                             </Td>
+                            <Td>
+                                {b.pecasCadastradas.length +
+                                    b.quantidadeDePecasSemCadastro}
+                            </Td>
                             <Td>{formatDate(b.dataMensagem)}</Td>
                             <Td>{calculatePrazo(b.dataMensagem)}</Td>
                             <Td>
@@ -416,17 +392,11 @@ export function Bolsas() {
                             </Td>
                             <Td>{b.observacoes || "N/A"}</Td>
                             <Td isNumeric>
-                                <HStack spacing={4} justify="flex-end">
+                                <HStack spacing={3} justify="flex-end">
                                     <IconButton
                                         aria-label="Editar"
                                         icon={<FaEdit />}
                                         onClick={() => openModal(b)}
-                                    />
-                                    <IconButton
-                                        aria-label="Deletar"
-                                        icon={<FaTrash />}
-                                        colorScheme="red"
-                                        onClick={() => handleDelete(b.bolsaId)}
                                     />
 
                                     <IconButton
@@ -434,7 +404,10 @@ export function Bolsas() {
                                         icon={<FaArrowAltCircleUp />}
                                         colorScheme="blue"
                                         onClick={() =>
-                                            handleSetStatusDevolvida(b.bolsaId)
+                                            handleSetStatus(b.bolsaId, {
+                                                statusDevolvida: true,
+                                                statusDoada: false,
+                                            })
                                         }
                                     />
                                     <IconButton
@@ -442,7 +415,10 @@ export function Bolsas() {
                                         icon={<FaBoxOpen />}
                                         colorScheme="blue"
                                         onClick={() =>
-                                            handleSetStatusDoada(b.bolsaId)
+                                            handleSetStatus(b.bolsaId, {
+                                                statusDevolvida: false,
+                                                statusDoada: true,
+                                            })
                                         }
                                     />
                                 </HStack>
