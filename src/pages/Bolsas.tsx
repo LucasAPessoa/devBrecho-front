@@ -327,7 +327,7 @@ export function Bolsas() {
                                     </Th>
 
                                     <Th>Peças Cadastradas</Th>
-
+                                    <Th>Total de Peças</Th>
                                     <Th
                                         cursor="pointer"
                                         userSelect="none"
@@ -338,6 +338,7 @@ export function Bolsas() {
                                         Data Mensagem{" "}
                                         <SortIcon columnKey="dataMensagem" />
                                     </Th>
+
                                     <Th
                                         cursor="pointer"
                                         userSelect="none"
@@ -376,6 +377,10 @@ export function Bolsas() {
                                         b.pecasCadastradas.length === 0) &&
                                         "Nenhuma"}
                                 </Wrap>
+                            </Td>
+                            <Td>
+                                {b.pecasCadastradas.length +
+                                    b.quantidadeDePecasSemCadastro}
                             </Td>
                             <Td>{formatDate(b.dataMensagem)}</Td>
                             <Td>{calculatePrazo(b.dataMensagem)}</Td>
