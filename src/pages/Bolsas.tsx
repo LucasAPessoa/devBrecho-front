@@ -160,32 +160,11 @@ export function Bolsas() {
         }
     }
 
-    async function handleSetStatusDevolvida(bolsaId: number) {
+    async function handleSetStatus(
+        bolsaId: number,
+        payload: { statusDevolvida: boolean; statusDoada: boolean }
+    ) {
         try {
-            const payload = {
-                statusDevolvida: true,
-                statusDoada: false,
-            };
-            await api.patch(`/bolsas/${bolsaId}/status`, payload);
-            toast({
-                title: "Status da bolsa alterado com sucesso!",
-                status: "success",
-            });
-            fetchData();
-        } catch {
-            toast({
-                title: "Erro ao alterar status da bolsa.",
-                status: "error",
-            });
-        }
-    }
-
-    async function handleSetStatusDoada(bolsaId: number) {
-        try {
-            const payload = {
-                statusDevolvida: false,
-                statusDoada: true,
-            };
             await api.patch(`/bolsas/${bolsaId}/status`, payload);
             toast({
                 title: "Status da bolsa alterado com sucesso!",
@@ -434,7 +413,10 @@ export function Bolsas() {
                                         icon={<FaArrowAltCircleUp />}
                                         colorScheme="blue"
                                         onClick={() =>
-                                            handleSetStatusDevolvida(b.bolsaId)
+                                            handleSetStatus(b.bolsaId, {
+                                                statusDevolvida: true,
+                                                statusDoada: false,
+                                            })
                                         }
                                     />
                                     <IconButton
@@ -442,7 +424,10 @@ export function Bolsas() {
                                         icon={<FaBoxOpen />}
                                         colorScheme="blue"
                                         onClick={() =>
-                                            handleSetStatusDoada(b.bolsaId)
+                                            handleSetStatus(b.bolsaId, {
+                                                statusDevolvida: false,
+                                                statusDoada: true,
+                                            })
                                         }
                                     />
                                 </HStack>
