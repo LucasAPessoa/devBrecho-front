@@ -298,13 +298,6 @@ export function Bolsas() {
                                     <Th
                                         cursor="pointer"
                                         userSelect="none"
-                                        onClick={() => requestSort("bolsaId")}
-                                    >
-                                        ID <SortIcon columnKey="bolsaId" />
-                                    </Th>
-                                    <Th
-                                        cursor="pointer"
-                                        userSelect="none"
                                         onClick={() =>
                                             requestSort("setor.nome")
                                         }
@@ -369,7 +362,6 @@ export function Bolsas() {
                 <Tbody>
                     {sortedData.map((b) => (
                         <Tr key={b.bolsaId}>
-                            <Td>{b.bolsaId}</Td>
                             <Td>{b.setor.nome}</Td>
                             <Td>{b.fornecedora.codigo || "N/A"}</Td>{" "}
                             <Td>{b.fornecedora.nome}</Td>
