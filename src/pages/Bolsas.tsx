@@ -392,17 +392,11 @@ export function Bolsas() {
                             </Td>
                             <Td>{b.observacoes || "N/A"}</Td>
                             <Td isNumeric>
-                                <HStack spacing={4} justify="flex-end">
+                                <HStack spacing={3} justify="flex-end">
                                     <IconButton
                                         aria-label="Editar"
                                         icon={<FaEdit />}
                                         onClick={() => openModal(b)}
-                                    />
-                                    <IconButton
-                                        aria-label="Deletar"
-                                        icon={<FaTrash />}
-                                        colorScheme="red"
-                                        onClick={() => handleDelete(b.bolsaId)}
                                     />
 
                                     <IconButton
