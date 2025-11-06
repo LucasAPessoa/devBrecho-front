@@ -208,7 +208,6 @@ export function Fornecedoras() {
             <Table variant="simple">
                 <Thead>
                     <Tr>
-                        <Th>ID</Th>
                         <Th>Código</Th>
                         <Th>Nome</Th>
                         <Th>Telefone</Th>
@@ -218,13 +217,20 @@ export function Fornecedoras() {
                 <Tbody>
                     {fornecedoras.map((f) => (
                         <Tr key={f.fornecedoraId}>
-                            <Td>{f.fornecedoraId}</Td>
                             <Td>{f.codigo || "N/A"}</Td>
                             <Td onClick={() => openModalDetails(f)}>
                                 {f.nome}
                             </Td>
                             <Td>{f.telefone || "N/A"}</Td>
-                            <Td isNumeric></Td>
+                            <Td isNumeric>
+                                <HStack spacing={2} justify="flex-end">
+                                    <IconButton
+                                        aria-label="Editar"
+                                        icon={<FaEdit />}
+                                        onClick={() => openModal(f)}
+                                    />
+                                </HStack>
+                            </Td>
                         </Tr>
                     ))}
                 </Tbody>
