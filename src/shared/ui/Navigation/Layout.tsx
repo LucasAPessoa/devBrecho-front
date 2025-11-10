@@ -26,7 +26,6 @@ export function Layout() {
             </Box>
             <Box flex="1" p={8}>
                 <Outlet />{" "}
-                {/* O conteúdo da rota atual será renderizado aqui */}
             </Box>
         </Flex>
     );
