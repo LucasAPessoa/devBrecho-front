@@ -31,62 +31,32 @@ import {
     NumberInputField,
     Wrap,
     Tag,
+    Spinner,
+    Alert,
+    AlertIcon,
+    AlertDescription,
+    AlertTitle,
 } from "@chakra-ui/react";
 import { useForm, Controller } from "react-hook-form";
 import {
     FaEdit,
-    FaTrash,
     FaSortUp,
     FaSortDown,
     FaArrowAltCircleUp,
     FaBoxOpen,
 } from "react-icons/fa";
 import { api } from "../services/api";
-import { useSortableData } from "../hooks/useSortableData";
+import { useSortableData } from "../shared/hooks/useSortableData";
 
-interface Peca {
-    pecaCadastradaId: number;
-    codigoDaPeca: string;
-}
-
-interface Fornecedora {
-    fornecedoraId: number;
-    codigo: string | null;
-    nome: string;
-}
-
-interface Bolsa {
-    bolsaId: number;
-    quantidadeDePecasSemCadastro: number;
-    observacoes: string | null;
-    fornecedoraId: number;
-    setorId: number;
-    fornecedora: {
-        nome: string;
-        codigo: string | null;
-    };
-    setor: { nome: string };
-    pecasCadastradas: Peca[];
-    dataMensagem: string;
-    statusDevolvida: boolean;
-    statusDoada: boolean;
-}
-interface Setor {
-    setorId: number;
-    nome: string;
-}
-
-type BolsaFormData = {
-    quantidadeDePecasSemCadastro: number;
-    observacoes?: string;
-    fornecedoraId: number;
-    setorId: number;
-    codigosDePeca?: string;
-    dataMensagem: string;
-};
+import { useBolsas } from "../features/bolsas/hooks/useBolsas";
+import {
+    Bolsa,
+    BolsaFormData,
+    Fornecedora,
+    Setor,
+} from "../features/bolsas/types/bolsas.types";
 
 export function Bolsas() {
-    const [bolsas, setBolsas] = useState<Bolsa[]>([]);
     const [setores, setSetores] = useState<Setor[]>([]);
     const [fornecedoras, setFornecedoras] = useState<Fornecedora[]>([]);
     const [selectedBolsa, setSelectedBolsa] = useState<Bolsa | null>(null);
@@ -95,16 +65,27 @@ export function Bolsas() {
     const { register, handleSubmit, reset, setValue, control } =
         useForm<BolsaFormData>();
 
-    const { sortedData, requestSort, sortConfig } = useSortableData(bolsas);
+    const {
+        bolsas,
+        isLoadingBolsas,
+        isErrorBolsas,
+        createBolsa,
+        updateBolsa,
+        deleteBolsa,
+        setStatusBolsa,
+    } = useBolsas();
+
+    const { sortedData, requestSort, sortConfig } = useSortableData(
+        bolsas || []
+    );
 
     async function fetchData() {
         try {
-            const [bolsasRes, setoresRes, fornecedorasRes] = await Promise.all([
-                api.get("/bolsas"),
+            const [setoresRes, fornecedorasRes] = await Promise.all([
                 api.get("/setores"),
                 api.get("/fornecedoras"),
             ]);
-            setBolsas(bolsasRes.data);
+
             setSetores(setoresRes.data);
             setFornecedoras(fornecedorasRes.data);
         } catch (error) {
@@ -129,54 +110,78 @@ export function Bolsas() {
             dataMensagem: data.dataMensagem,
         };
 
-        try {
-            if (selectedBolsa) {
-                await api.put(`/bolsas/${selectedBolsa.bolsaId}`, payload);
-                toast({
-                    title: "Bolsa atualizada com sucesso!",
-                    status: "success",
-                });
-            } else {
-                await api.post("/bolsas", payload);
-                toast({
-                    title: "Bolsa e peças criadas com sucesso!",
-                    status: "success",
-                });
-            }
-
-            resetModalAndFetch();
-        } catch (error) {
-            toast({ title: "Erro ao salvar bolsa.", status: "error" });
+        if (selectedBolsa) {
+            updateBolsa(
+                { id: selectedBolsa.bolsaId, dadosAtualizados: payload },
+                {
+                    onSuccess: () => {
+                        toast({
+                            title: "Bolsa atualizada com sucesso!",
+                            status: "success",
+                        });
+                        resetModalAndFetch();
+                    },
+                    onError: () => {
+                        toast({
+                            title: "Erro ao atualizar bolsa.",
+                            status: "error",
+                        });
+                    },
+                }
+            );
+        } else {
+            createBolsa(payload, {
+                onSuccess: () => {
+                    toast({
+                        title: "Bolsa e peças criadas com sucesso!",
+                        status: "success",
+                    });
+                    resetModalAndFetch();
+                },
+                onError: () => {
+                    toast({ title: "Erro ao criar bolsa.", status: "error" });
+                },
+            });
         }
     }
 
     async function handleDelete(id: number) {
-        try {
-            await api.delete(`/bolsas/${id}`);
-            toast({ title: "Bolsa deletada com sucesso!", status: "warning" });
-            fetchData();
-        } catch (error) {
-            toast({ title: "Erro ao deletar bolsa.", status: "error" });
-        }
+        deleteBolsa(id, {
+            onSuccess: () => {
+                toast({
+                    title: "Bolsa deletada com sucesso!",
+                    status: "warning",
+                });
+                fetchData();
+            },
+            onError: () => {
+                toast({ title: "Erro ao deletar bolsa.", status: "error" });
+            },
+        });
     }
 
     async function handleSetStatus(
         bolsaId: number,
         payload: { statusDevolvida: boolean; statusDoada: boolean }
     ) {
-        try {
-            await api.patch(`/bolsas/${bolsaId}/status`, payload);
-            toast({
-                title: "Status da bolsa alterado com sucesso!",
-                status: "success",
-            });
-            fetchData();
-        } catch {
-            toast({
-                title: "Erro ao alterar status da bolsa.",
-                status: "error",
-            });
-        }
+        setStatusBolsa(
+            { bolsaId, payload },
+            {
+                onSuccess: () => {
+                    toast({
+                        title: "Status da bolsa alterado com sucesso!",
+                        status: "success",
+                    });
+                    fetchData();
+                },
+                onError: () => {
+                    toast({
+                        title: "Erro ao alterar status da bolsa.",
+                        status: "error",
+                    });
+                },
+            }
+        );
     }
 
     function handleShowStatus(statusDevolvida: boolean, statusDoada: boolean) {
@@ -257,6 +262,39 @@ export function Bolsas() {
             timeZone: "UTC",
         });
     }
+
+    if (isLoadingBolsas) {
+        return (
+            <Flex justify="center" align="center" height="300px">
+                <Spinner size="xl" />
+            </Flex>
+        );
+    }
+
+    if (isErrorBolsas) {
+        return (
+            <Alert
+                status="error"
+                variant="subtle"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                textAlign="center"
+                height="200px"
+                borderRadius="md"
+            >
+                <AlertIcon boxSize="40px" mr={0} />
+                <AlertTitle mt={4} mb={1} fontSize="lg">
+                    Opa! Ocorreu um erro
+                </AlertTitle>
+                <AlertDescription maxWidth="sm">
+                    Não foi possível buscar os dados. Tente recarregar a página
+                    ou peça ajuda de um desenvolvedor.
+                </AlertDescription>
+            </Alert>
+        );
+    }
+
     return (
         <Box>
             <Flex justify="space-between" align="center" mb={6}>
