@@ -313,7 +313,8 @@ export function Fornecedoras() {
                                             <strong>
                                                 Quantidade de Pecas:
                                             </strong>{" "}
-                                            {d.quantidadeDePecasSemCadastro}
+                                            {d.quantidadeDePecasSemCadastro +
+                                                d.pecasCadastradas.length}
                                         </p>
                                         <p>
                                             <strong></strong>
