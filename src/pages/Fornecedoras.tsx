@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     Box,
     Button,
@@ -23,59 +23,40 @@ import {
     VStack,
     HStack,
     IconButton,
+    Alert,
+    Spinner,
+    AlertIcon,
+    AlertTitle,
+    AlertDescription,
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import { api } from "../services/api";
+import { FaEdit } from "react-icons/fa";
 
-// Tipagem dos dados
-interface Fornecedora {
-    fornecedoraId: number;
-    codigo: string;
-    nome: string;
-    telefone?: string;
-}
+import {
+    useFornecedoras,
+    Fornecedora,
+    FornecedoraFormData,
+} from "../features/fornecedoras/index";
 
-interface Setor {
-    setorId: number;
-    nome: string;
-}
-
-interface DetailsBolsa {
-    bolsaId: number;
-    dataDeEntrada: string;
-    dataMensagem: string;
-    deletedAt: string | null;
-    fornecedora: Fornecedora;
-    fornecedoraId: number;
-    observacoes: string;
-    pecasCadastradas: Peca[];
-    quantidadeDePecasSemCadastro: number;
-    setor: Setor;
-    setorId: number;
-    statusDevolvida: boolean | null;
-    statusDoada: boolean;
-}
-
-interface Peca {
-    pecaCadastradaId: number;
-    codigoDaPeca: string;
-}
-
-// Tipagem para o formulário
-type FornecedoraFormData = {
-    codigo: string;
-    nome: string;
-    telefone?: string;
-};
+import { useBolsas, Bolsa } from "../features/bolsas";
 
 export function Fornecedoras() {
-    const [fornecedoras, setFornecedoras] = useState<Fornecedora[]>([]);
     const [selectedFornecedora, setSelectedFornecedora] =
         useState<Fornecedora | null>(null);
     const { isOpen, onOpen, onClose } = useDisclosure();
 
-    const [detailsData, setDetailsData] = useState<DetailsBolsa[]>();
+    const [detailsData, setDetailsData] = useState<Bolsa[]>();
+
+    const {
+        fornecedoras,
+        isLoadingFornecedoras,
+        isErrorFornecedoras,
+        createFornecedora,
+        updateFornecedora,
+        deleteFornecedora,
+    } = useFornecedoras();
+
+    const { setStatusBolsa, getDoadaEDevolvidaBolsas } = useBolsas();
 
     const {
         isOpen: isDetailsOpen,
@@ -84,72 +65,85 @@ export function Fornecedoras() {
     } = useDisclosure();
 
     const toast = useToast();
+
     const { register, handleSubmit, reset, setValue } =
         useForm<FornecedoraFormData>();
 
-    async function fetchFornecedoras() {
-        try {
-            const response = await api.get("/fornecedoras");
-            setFornecedoras(response.data);
-        } catch (error) {
-            toast({ title: "Erro ao buscar fornecedoras.", status: "error" });
-        }
-    }
-
-    async function handleSetStatusDevolvida(bolsaId: number) {
-        try {
-            const payload = {
-                statusDevolvida: false,
-                statusDoada: false,
-            };
-            await api.patch(`/bolsas/${bolsaId}/status`, payload);
-            toast({
-                title: "Status da bolsa alterado com sucesso!",
-                status: "success",
-            });
-        } catch {
-            toast({
-                title: "Erro ao alterar status da bolsa.",
-                status: "error",
-            });
-        }
+    async function handleSetStatusReset(bolsaId: number) {
+        const payload = { statusDevolvida: false, statusDoada: false };
+        setStatusBolsa(
+            { bolsaId, payload },
+            {
+                onSuccess: () => {
+                    toast({
+                        title: "Status da bolsa alterado com sucesso!",
+                        status: "success",
+                    });
+                },
+                onError: () => {
+                    toast({
+                        title: "Erro ao alterar status da bolsa.",
+                        status: "error",
+                    });
+                },
+            }
+        );
     }
 
     async function handleSave(data: FornecedoraFormData) {
-        try {
-            if (selectedFornecedora) {
-                await api.put(
-                    `/fornecedoras/${selectedFornecedora.fornecedoraId}`,
-                    data
-                );
-                toast({
-                    title: "Fornecedora atualizada com sucesso!",
-                    status: "success",
-                });
-            } else {
-                await api.post("/fornecedoras", data);
-                toast({
-                    title: "Fornecedora criada com sucesso!",
-                    status: "success",
-                });
-            }
-            resetModalAndFetch();
-        } catch (error) {
-            toast({ title: `Erro ao salvar fornecedora.`, status: "error" });
+        if (selectedFornecedora) {
+            updateFornecedora(
+                {
+                    id: selectedFornecedora.fornecedoraId,
+                    dadosAtualizados: data,
+                },
+                {
+                    onSuccess: () =>
+                        toast({
+                            title: "Fornecedora atualizada com sucesso!",
+                            status: "success",
+                        }),
+                    onError: () =>
+                        toast({
+                            title: "Erro ao atualizar a fornecedora!",
+                            status: "error",
+                        }),
+                }
+            );
+        } else {
+            createFornecedora(data, {
+                onSuccess: () => {
+                    toast({
+                        title: "Fornecedora criada com sucesso!",
+                        status: "success",
+                    });
+                },
+                onError: () => {
+                    toast({
+                        title: "Erro ao criar a fornecedora!",
+                        status: "error",
+                    });
+                },
+            });
         }
+        resetModalAndFetch();
     }
 
     async function handleDelete(id: number) {
-        try {
-            await api.delete(`/fornecedoras/${id}`);
-            toast({
-                title: "Fornecedora deletada com sucesso!",
-                status: "warning",
-            });
-            fetchFornecedoras();
-        } catch (error) {
-            toast({ title: "Erro ao deletar fornecedora.", status: "error" });
-        }
+        deleteFornecedora(id, {
+            onSuccess: () => {
+                toast({
+                    title: "Fornecedora deletada com sucesso!",
+                    status: "warning",
+                });
+            },
+            onError: () => {
+                toast({
+                    title: "Erro ao deletar fornecedora.",
+                    status: "error",
+                });
+            },
+        });
     }
 
     function openModal(fornecedora: Fornecedora | null = null) {
@@ -165,19 +159,21 @@ export function Fornecedoras() {
     async function openModalDetails(fornecedora: Fornecedora | null = null) {
         onDetailsOpen();
 
-        try {
-            if (fornecedora) {
-                const response = await api.get(
-                    `/bolsas/doadasEDevolvidas/${fornecedora.fornecedoraId}`
-                );
-
-                const data = response.data;
-
-                setDetailsData(data);
-                console.log("DADOS RECEBIDOS:", data);
-            }
-        } catch (err) {
-            console.error("Falha ao buscar detalhes:", err);
+        if (fornecedora) {
+            const data = await getDoadaEDevolvidaBolsas(
+                fornecedora.fornecedoraId,
+                {
+                    onSuccess: () => {
+                        setDetailsData(data);
+                    },
+                    onError: () => {
+                        toast({
+                            title: "Erro ao carregar doadas e devolvidas",
+                            status: "error",
+                        });
+                    },
+                }
+            );
         }
     }
 
@@ -185,16 +181,43 @@ export function Fornecedoras() {
         reset({ codigo: "", nome: "", telefone: "" });
         setSelectedFornecedora(null);
         onClose();
-        fetchFornecedoras();
     }
 
     function resetDetailsModalAndFetch() {
         onDetailsClose();
     }
 
-    useEffect(() => {
-        fetchFornecedoras();
-    }, []);
+    if (isLoadingFornecedoras) {
+        return (
+            <Flex justify="center" align="center" height="300px">
+                <Spinner size="xl" />
+            </Flex>
+        );
+    }
+
+    if (isErrorFornecedoras) {
+        return (
+            <Alert
+                status="error"
+                variant="subtle"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                textAlign="center"
+                height="200px"
+                borderRadius="md"
+            >
+                <AlertIcon boxSize="40px" mr={0} />
+                <AlertTitle mt={4} mb={1} fontSize="lg">
+                    Opa! Ocorreu um erro
+                </AlertTitle>
+                <AlertDescription maxWidth="sm">
+                    Não foi possível buscar os dados. Tente recarregar a página
+                    ou peça ajuda de um desenvolvedor.
+                </AlertDescription>
+            </Alert>
+        );
+    }
 
     return (
         <Box>
@@ -215,7 +238,7 @@ export function Fornecedoras() {
                     </Tr>
                 </Thead>
                 <Tbody>
-                    {fornecedoras.map((f) => (
+                    {fornecedoras?.map((f) => (
                         <Tr key={f.fornecedoraId}>
                             <Td>{f.codigo || "N/A"}</Td>
                             <Td onClick={() => openModalDetails(f)}>
@@ -301,7 +324,7 @@ export function Fornecedoras() {
                                 .map((d) => (
                                     <VStack
                                         key={d.bolsaId}
-                                        spacing={1}
+                                        spacing={2}
                                         align="stretch"
                                         mb={2}
                                         p={2}
@@ -316,13 +339,19 @@ export function Fornecedoras() {
                                             {d.quantidadeDePecasSemCadastro +
                                                 d.pecasCadastradas.length}
                                         </p>
-                                        <p>
-                                            <strong></strong>
-                                        </p>
+
                                         <p>
                                             <strong>Obs:</strong>{" "}
                                             {d.observacoes || "N/A"}
                                         </p>
+                                        <button
+                                            color="blue"
+                                            onClick={() => {
+                                                handleSetStatusReset(d.bolsaId);
+                                            }}
+                                        >
+                                            Reset
+                                        </button>
                                     </VStack>
                                 ))}
 
@@ -349,7 +378,7 @@ export function Fornecedoras() {
                                 .map((d) => (
                                     <VStack
                                         key={d.bolsaId}
-                                        spacing={1}
+                                        spacing={2}
                                         align="stretch"
                                         mb={2}
                                         p={2}
@@ -367,12 +396,13 @@ export function Fornecedoras() {
                                         </p>
 
                                         <button
+                                            color="blue"
                                             onClick={() => {
-                                                handleSetStatusDevolvida(
-                                                    d.bolsaId
-                                                );
+                                                handleSetStatusReset(d.bolsaId);
                                             }}
-                                        ></button>
+                                        >
+                                            Reset
+                                        </button>
                                     </VStack>
                                 ))}
 
