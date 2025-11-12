@@ -28,66 +28,77 @@ import { useForm } from "react-hook-form";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { api } from "../services/api";
 
-interface Setor {
-    setorId: number;
-    nome: string;
-}
-
-type SetorFormData = {
-    nome: string;
-};
+import { Setor, SetorFormData, useSetores } from "../features/setores/index";
 
 export function Setores() {
-    const [setores, setSetores] = useState<Setor[]>([]);
     const [selectedSetor, setSelectedSetor] = useState<Setor | null>(null);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const toast = useToast();
     const { register, handleSubmit, reset, setValue } =
         useForm<SetorFormData>();
 
-    async function fetchSetores() {
-        try {
-            const response = await api.get("/setores");
-            setSetores(response.data);
-        } catch (error) {
-            toast({
-                title: "Erro ao buscar setores.",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-        }
-    }
+    const {
+        setores,
+        isLoadingSetores,
+        isErrorSetores,
+        createSetor,
+        deleteSetor,
+        updateSetor,
+    } = useSetores();
 
     async function handleSaveSetor(data: SetorFormData) {
-        try {
-            if (selectedSetor) {
-                await api.put(`/setores/${selectedSetor.setorId}`, data);
-                toast({
-                    title: "Setor atualizado com sucesso!",
-                    status: "success",
-                });
-            } else {
-                await api.post("/setores", data);
-                toast({
-                    title: "Setor criado com sucesso!",
-                    status: "success",
-                });
-            }
-            resetModalAndFetch();
-        } catch (error) {
-            toast({ title: `Erro ao salvar setor.`, status: "error" });
+        if (selectedSetor) {
+            updateSetor(
+                {
+                    id: selectedSetor.setorId,
+                    dadosAtualizados: data,
+                },
+                {
+                    onSuccess: () => {
+                        toast({
+                            title: "Setor atualizado com sucesso!",
+                            status: "success",
+                        });
+                    },
+                    onError: () => {
+                        toast({
+                            title: "Erro ao atualizar o setor",
+                            status: "error",
+                        });
+                    },
+                }
+            );
+        } else {
+            createSetor(data, {
+                onSuccess: () => {
+                    toast({
+                        title: "Setor criado com sucesso!",
+                        status: "success",
+                    });
+                },
+                onError: () => {
+                    toast({
+                        title: "Erro ao criado o setor",
+                        status: "error",
+                    });
+                },
+            });
         }
+        resetModalAndFetch();
     }
 
     async function handleDeleteSetor(id: number) {
-        try {
-            await api.delete(`/setores/${id}`);
-            toast({ title: "Setor deletado com sucesso!", status: "warning" });
-            fetchSetores();
-        } catch (error) {
-            toast({ title: "Erro ao deletar setor.", status: "error" });
-        }
+        deleteSetor(id, {
+            onSuccess: () => {
+                toast({
+                    title: "Setor deletado com sucesso!",
+                    status: "warning",
+                });
+            },
+            onError: () => {
+                toast({ title: "Erro ao deletar setor.", status: "error" });
+            },
+        });
     }
 
     function openModal(setor: Setor | null = null) {
@@ -102,12 +113,7 @@ export function Setores() {
         reset({ nome: "" });
         setSelectedSetor(null);
         onClose();
-        fetchSetores();
     }
-
-    useEffect(() => {
-        fetchSetores();
-    }, []);
 
     return (
         <Box>
@@ -126,7 +132,7 @@ export function Setores() {
                     </Tr>
                 </Thead>
                 <Tbody>
-                    {setores.map((setor) => (
+                    {setores?.map((setor) => (
                         <Tr key={setor.setorId}>
                             <Td>{setor.nome}</Td>
                             <Td isNumeric>
