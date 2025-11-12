@@ -48,13 +48,15 @@ import {
 import { api } from "../services/api";
 import { useSortableData } from "../shared/hooks/useSortableData";
 
-import { useBolsas } from "../features/bolsas/hooks/useBolsas";
 import {
+    useBolsas,
+    //BolsasList,
     Bolsa,
     BolsaFormData,
-    Fornecedora,
     Setor,
-} from "../features/bolsas/types/bolsas.types";
+} from "../features/bolsas";
+
+import { Fornecedora } from "../features/fornecedoras/index";
 
 export function Bolsas() {
     const [setores, setSetores] = useState<Setor[]>([]);
