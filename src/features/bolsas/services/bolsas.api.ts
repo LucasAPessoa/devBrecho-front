@@ -35,3 +35,12 @@ export const updateBolsa = async ({
     const { data } = await api.put(`/bolsas/${id}`, dadosAtualizados);
     return data;
 };
+
+export const getDoadaEDevolvidaBolsas = async (
+    fornecedoraId: number
+): Promise<Bolsa[]> => {
+    const { data } = await api.get<Bolsa[]>(
+        `/bolsas/doadasEDevolvidas/${fornecedoraId}`
+    );
+    return data;
+};

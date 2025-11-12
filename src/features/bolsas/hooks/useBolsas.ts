@@ -45,6 +45,13 @@ export const useBolsas = () => {
         }
     );
 
+    const {
+        mutateAsync: getDoadaEDevolvidaBolsas,
+        isPending: isGettingDoadasEDevolvidas,
+    } = useMutation({
+        mutationFn: bolsasApi.getDoadaEDevolvidaBolsas,
+    });
+
     return {
         bolsas,
         isLoadingBolsas: isLoading,
@@ -59,5 +66,7 @@ export const useBolsas = () => {
         isUpdatingBolsa: isUpdating,
         setStatusBolsa,
         isChangingStatusBolsa: isChangingStatus,
+        getDoadaEDevolvidaBolsas,
+        isGettingDoadasEDevolvidas,
     };
 };
