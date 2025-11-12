@@ -1,13 +1,4 @@
-export type Peca = {
-    pecaCadastradaId: number;
-    codigoDaPeca: string;
-};
-
-export type Fornecedora = {
-    fornecedoraId: number;
-    codigo: string | null;
-    nome: string;
-};
+import { Peca } from "../../../shared/types/pecas.types";
 
 export type Bolsa = {
     bolsaId: number;
