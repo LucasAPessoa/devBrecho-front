@@ -1,66 +1,38 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     Box,
     Button,
     Flex,
     Heading,
-    Input,
-    FormControl,
-    FormLabel,
-    Select,
-    Textarea,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
-    Table,
-    Tbody,
-    Td,
-    Th,
-    Thead,
-    Tr,
     useDisclosure,
     useToast,
-    VStack,
-    HStack,
-    IconButton,
-    NumberInput,
-    NumberInputField,
-    Wrap,
-    Tag,
     Spinner,
     Alert,
     AlertIcon,
     AlertDescription,
     AlertTitle,
 } from "@chakra-ui/react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
-import { api } from "../services/api";
 import { useSortableData } from "../shared/hooks/useSortableData";
 
 import {
     useBolsas,
     Bolsa,
     BolsaFormData,
-    Setor,
     BolsasTable,
+    BolsaFormModal,
 } from "../features/bolsas";
 
-import { Fornecedora } from "../features/fornecedoras/index";
+import { useFornecedoras } from "../features/fornecedoras/index";
 import { toInputDate } from "../shared/utils/formatters";
+import { useSetores } from "../features/setores";
 
 export function Bolsas() {
-    const [setores, setSetores] = useState<Setor[]>([]);
-    const [fornecedoras, setFornecedoras] = useState<Fornecedora[]>([]);
     const [selectedBolsa, setSelectedBolsa] = useState<Bolsa | null>(null);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const toast = useToast();
-    const { register, handleSubmit, reset, setValue, control } =
-        useForm<BolsaFormData>();
+    const { reset, setValue } = useForm<BolsaFormData>();
 
     const {
         bolsas,
@@ -76,19 +48,8 @@ export function Bolsas() {
         bolsas || []
     );
 
-    async function fetchData() {
-        try {
-            const [setoresRes, fornecedorasRes] = await Promise.all([
-                api.get("/setores"),
-                api.get("/fornecedoras"),
-            ]);
-
-            setSetores(setoresRes.data);
-            setFornecedoras(fornecedorasRes.data);
-        } catch (error) {
-            toast({ title: "Erro ao buscar dados.", status: "error" });
-        }
-    }
+    const { fornecedoras } = useFornecedoras();
+    const { setores } = useSetores();
 
     async function handleSave(data: BolsaFormData) {
         const codigosArray =
@@ -149,7 +110,6 @@ export function Bolsas() {
                     title: "Bolsa deletada com sucesso!",
                     status: "warning",
                 });
-                fetchData();
             },
             onError: () => {
                 toast({ title: "Erro ao deletar bolsa.", status: "error" });
@@ -169,7 +129,6 @@ export function Bolsas() {
                         title: "Status da bolsa alterado com sucesso!",
                         status: "success",
                     });
-                    fetchData();
                 },
                 onError: () => {
                     toast({
@@ -204,12 +163,7 @@ export function Bolsas() {
         reset();
         setSelectedBolsa(null);
         onClose();
-        fetchData();
     }
-
-    useEffect(() => {
-        fetchData();
-    }, []);
 
     if (isLoadingBolsas) {
         return (
@@ -259,92 +213,14 @@ export function Bolsas() {
                 onEdit={handleOpenModal}
                 onStatusChange={handleStatusChange}
             />
-
-            <Modal isOpen={isOpen} onClose={resetModalAndFetch} size="xl">
-                <ModalOverlay />
-                <ModalContent>
-                    <ModalHeader>
-                        {selectedBolsa ? "Editar" : "Adicionar"} Bolsa
-                    </ModalHeader>
-                    <ModalCloseButton />
-                    <form onSubmit={handleSubmit(handleSave)}>
-                        <ModalBody>
-                            <VStack spacing={4}>
-                                <Select
-                                    placeholder="Selecione um Setor"
-                                    {...register("setorId", { required: true })}
-                                >
-                                    {setores.map((s) => (
-                                        <option
-                                            key={s.setorId}
-                                            value={s.setorId}
-                                        >
-                                            {s.nome}
-                                        </option>
-                                    ))}
-                                </Select>
-                                <Select
-                                    placeholder="Selecione uma Fornecedora"
-                                    {...register("fornecedoraId", {
-                                        required: true,
-                                    })}
-                                >
-                                    {fornecedoras.map((f) => (
-                                        <option
-                                            key={f.fornecedoraId}
-                                            value={f.fornecedoraId}
-                                        >
-                                            {f.codigo ? `${f.codigo} - ` : ""}
-                                            {f.nome}
-                                        </option>
-                                    ))}
-                                </Select>
-                                <Controller
-                                    name="quantidadeDePecasSemCadastro"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <NumberInput {...field}>
-                                            <NumberInputField placeholder="Peças sem cadastro" />
-                                        </NumberInput>
-                                    )}
-                                />
-                                <FormControl isRequired>
-                                    <FormLabel htmlFor="dataMensagem">
-                                        Data da Mensagem
-                                    </FormLabel>
-                                    <Input
-                                        id="dataMensagem"
-                                        type="date"
-                                        {...register("dataMensagem", {
-                                            required: true,
-                                        })}
-                                    />
-                                </FormControl>
-                                <Textarea
-                                    placeholder="Observações (opcional)"
-                                    {...register("observacoes")}
-                                />
-                                <Textarea
-                                    placeholder="Cole a lista de códigos das peças aqui, um por linha."
-                                    {...register("codigosDePeca")}
-                                    rows={10}
-                                />
-                            </VStack>
-                        </ModalBody>
-                        <ModalFooter>
-                            <Button colorScheme="blue" mr={3} type="submit">
-                                Salvar
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                onClick={resetModalAndFetch}
-                            >
-                                Cancelar
-                            </Button>
-                        </ModalFooter>
-                    </form>
-                </ModalContent>
-            </Modal>
+            <BolsaFormModal
+                isOpen={isOpen}
+                onClose={onClose}
+                onSave={handleSave}
+                initialData={selectedBolsa}
+                setores={setores ?? []}
+                fornecedoras={fornecedoras ?? []}
+            />
         </Box>
     );
 }

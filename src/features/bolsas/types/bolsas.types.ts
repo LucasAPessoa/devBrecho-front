@@ -17,11 +17,6 @@ export type Bolsa = {
     statusDoada: boolean;
 };
 
-export type Setor = {
-    setorId: number;
-    nome: string;
-};
-
 export type BolsaFormData = {
     quantidadeDePecasSemCadastro: number;
     observacoes?: string;
