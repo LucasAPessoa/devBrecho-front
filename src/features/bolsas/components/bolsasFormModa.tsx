@@ -45,7 +45,6 @@ export function BolsaFormModal({
     const { register, handleSubmit, reset, setValue, control } =
         useForm<BolsaFormData>();
 
-    // Quando o modal abre ou muda o initialData, a gente reseta o form
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
