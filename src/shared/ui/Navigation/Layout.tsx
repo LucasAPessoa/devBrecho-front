@@ -19,9 +19,6 @@ export function Layout() {
                     <ChakraLink as={RouterLink} to="/bolsas" fontSize="lg">
                         Bolsas
                     </ChakraLink>
-                    <ChakraLink as={RouterLink} to="/pecas" fontSize="lg">
-                        Peças
-                    </ChakraLink>
                 </VStack>
             </Box>
             <Box flex="1" p={8}>
