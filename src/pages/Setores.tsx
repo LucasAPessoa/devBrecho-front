@@ -26,7 +26,6 @@ import {
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import { api } from "../services/api";
 
 import { Setor, SetorFormData, useSetores } from "../features/setores/index";
 
