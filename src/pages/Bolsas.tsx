@@ -38,25 +38,20 @@ import {
     AlertTitle,
 } from "@chakra-ui/react";
 import { useForm, Controller } from "react-hook-form";
-import {
-    FaEdit,
-    FaSortUp,
-    FaSortDown,
-    FaArrowAltCircleUp,
-    FaBoxOpen,
-} from "react-icons/fa";
+
 import { api } from "../services/api";
 import { useSortableData } from "../shared/hooks/useSortableData";
 
 import {
     useBolsas,
-    //BolsasList,
     Bolsa,
     BolsaFormData,
     Setor,
+    BolsasTable,
 } from "../features/bolsas";
 
 import { Fornecedora } from "../features/fornecedoras/index";
+import { toInputDate } from "../shared/utils/formatters";
 
 export function Bolsas() {
     const [setores, setSetores] = useState<Setor[]>([]);
@@ -162,7 +157,7 @@ export function Bolsas() {
         });
     }
 
-    async function handleSetStatus(
+    async function handleStatusChange(
         bolsaId: number,
         payload: { statusDevolvida: boolean; statusDoada: boolean }
     ) {
@@ -186,15 +181,7 @@ export function Bolsas() {
         );
     }
 
-    function handleShowStatus(statusDevolvida: boolean, statusDoada: boolean) {
-        return statusDevolvida === true
-            ? "DEVOLVIDA"
-            : statusDoada === true
-            ? "DOADA"
-            : null;
-    }
-
-    function openModal(bolsa: Bolsa | null = null) {
+    function handleOpenModal(bolsa: Bolsa | null = null) {
         setSelectedBolsa(bolsa);
         if (bolsa) {
             setValue("setorId", bolsa.setorId);
@@ -260,172 +247,18 @@ export function Bolsas() {
         <Box>
             <Flex justify="space-between" align="center" mb={6}>
                 <Heading>Gerenciar Bolsas</Heading>
-                <Button colorScheme="teal" onClick={() => openModal()}>
+                <Button colorScheme="teal" onClick={() => handleOpenModal()}>
                     Adicionar Bolsa
                 </Button>
             </Flex>
 
-            <Table variant="simple">
-                <Thead>
-                    <Tr>
-                        {(() => {
-                            const SortIcon = ({
-                                columnKey,
-                            }: {
-                                columnKey: string;
-                            }) => {
-                                if (sortConfig.key !== columnKey) return null;
-                                return sortConfig.direction === "asc" ? (
-                                    <FaSortUp
-                                        style={{
-                                            display: "inline",
-                                            marginLeft: "4px",
-                                        }}
-                                    />
-                                ) : (
-                                    <FaSortDown
-                                        style={{
-                                            display: "inline",
-                                            marginLeft: "4px",
-                                        }}
-                                    />
-                                );
-                            };
-
-                            return (
-                                <>
-                                    <Th
-                                        cursor="pointer"
-                                        userSelect="none"
-                                        onClick={() =>
-                                            requestSort("setor.nome")
-                                        }
-                                    >
-                                        Setor{" "}
-                                        <SortIcon columnKey="setor.nome" />
-                                    </Th>
-                                    <Th
-                                        cursor="pointer"
-                                        userSelect="none"
-                                        onClick={() =>
-                                            requestSort("fornecedora.codigo")
-                                        }
-                                    >
-                                        Cód. Fornecedora{" "}
-                                        <SortIcon columnKey="fornecedora.codigo" />
-                                    </Th>
-                                    <Th
-                                        cursor="pointer"
-                                        userSelect="none"
-                                        onClick={() =>
-                                            requestSort("fornecedora.nome")
-                                        }
-                                    >
-                                        Fornecedora{" "}
-                                        <SortIcon columnKey="fornecedora.nome" />
-                                    </Th>
-
-                                    <Th>Peças Cadastradas</Th>
-                                    <Th>Total de Peças</Th>
-                                    <Th
-                                        cursor="pointer"
-                                        userSelect="none"
-                                        onClick={() =>
-                                            requestSort("dataMensagem")
-                                        }
-                                    >
-                                        Data Mensagem{" "}
-                                        <SortIcon columnKey="dataMensagem" />
-                                    </Th>
-
-                                    <Th
-                                        cursor="pointer"
-                                        userSelect="none"
-                                        onClick={() =>
-                                            requestSort("dataMensagem")
-                                        }
-                                    >
-                                        Prazo{" "}
-                                        <SortIcon columnKey="dataMensagem" />
-                                    </Th>
-
-                                    <Th>Status</Th>
-
-                                    <Th>Observações</Th>
-
-                                    <Th isNumeric>Ações</Th>
-                                </>
-                            );
-                        })()}
-                    </Tr>
-                </Thead>
-                <Tbody>
-                    {sortedData.map((b) => (
-                        <Tr key={b.bolsaId}>
-                            <Td>{b.setor.nome}</Td>
-                            <Td>{b.fornecedora.codigo || "N/A"}</Td>{" "}
-                            <Td>{b.fornecedora.nome}</Td>
-                            <Td>
-                                <Wrap>
-                                    {b.pecasCadastradas?.map((p) => (
-                                        <Tag key={p.pecaCadastradaId} size="sm">
-                                            {p.codigoDaPeca}
-                                        </Tag>
-                                    ))}
-                                    {(!b.pecasCadastradas ||
-                                        b.pecasCadastradas.length === 0) &&
-                                        "Nenhuma"}
-                                </Wrap>
-                            </Td>
-                            <Td>
-                                {b.pecasCadastradas.length +
-                                    b.quantidadeDePecasSemCadastro}
-                            </Td>
-                            <Td>{formatDate(b.dataMensagem)}</Td>
-                            <Td>{calculatePrazo(b.dataMensagem)}</Td>
-                            <Td>
-                                {handleShowStatus(
-                                    b.statusDevolvida,
-                                    b.statusDoada
-                                )}
-                            </Td>
-                            <Td>{b.observacoes || "N/A"}</Td>
-                            <Td isNumeric>
-                                <HStack spacing={3} justify="flex-end">
-                                    <IconButton
-                                        aria-label="Editar"
-                                        icon={<FaEdit />}
-                                        onClick={() => openModal(b)}
-                                    />
-
-                                    <IconButton
-                                        aria-label="Devolver"
-                                        icon={<FaArrowAltCircleUp />}
-                                        colorScheme="blue"
-                                        onClick={() =>
-                                            handleSetStatus(b.bolsaId, {
-                                                statusDevolvida: true,
-                                                statusDoada: false,
-                                            })
-                                        }
-                                    />
-                                    <IconButton
-                                        aria-label="Doar"
-                                        icon={<FaBoxOpen />}
-                                        colorScheme="blue"
-                                        onClick={() =>
-                                            handleSetStatus(b.bolsaId, {
-                                                statusDevolvida: false,
-                                                statusDoada: true,
-                                            })
-                                        }
-                                    />
-                                </HStack>
-                            </Td>
-                        </Tr>
-                    ))}
-                </Tbody>
-            </Table>
+            <BolsasTable
+                bolsas={sortedData}
+                sortConfig={sortConfig}
+                requestSort={requestSort}
+                onEdit={handleOpenModal}
+                onStatusChange={handleStatusChange}
+            />
 
             <Modal isOpen={isOpen} onClose={resetModalAndFetch} size="xl">
                 <ModalOverlay />
