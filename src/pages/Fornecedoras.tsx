@@ -160,20 +160,17 @@ export function Fornecedoras() {
         onDetailsOpen();
 
         if (fornecedora) {
-            const data = await getDoadaEDevolvidaBolsas(
-                fornecedora.fornecedoraId,
-                {
-                    onSuccess: () => {
-                        setDetailsData(data);
-                    },
-                    onError: () => {
-                        toast({
-                            title: "Erro ao carregar doadas e devolvidas",
-                            status: "error",
-                        });
-                    },
-                }
-            );
+            await getDoadaEDevolvidaBolsas(fornecedora.fornecedoraId, {
+                onSuccess: (data) => {
+                    setDetailsData(data);
+                },
+                onError: () => {
+                    toast({
+                        title: "Erro ao carregar doadas e devolvidas",
+                        status: "error",
+                    });
+                },
+            });
         }
     }
 
@@ -227,7 +224,6 @@ export function Fornecedoras() {
                     Adicionar Fornecedora
                 </Button>
             </Flex>
-
             <Table variant="simple">
                 <Thead>
                     <Tr>
