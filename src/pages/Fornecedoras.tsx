@@ -1,17 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     Box,
     Button,
     Flex,
     Heading,
-    Input,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
     Table,
     Tbody,
     Td,
@@ -20,187 +12,156 @@ import {
     Tr,
     useDisclosure,
     useToast,
-    VStack,
     HStack,
     IconButton,
+    Alert,
+    Spinner,
+    AlertIcon,
+    AlertTitle,
+    AlertDescription,
 } from "@chakra-ui/react";
-import { useForm } from "react-hook-form";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import { api } from "../services/api";
+import { FaEdit } from "react-icons/fa";
 
-// Tipagem dos dados
-interface Fornecedora {
-    fornecedoraId: number;
-    codigo: string;
-    nome: string;
-    telefone?: string;
-}
-
-interface Setor {
-    setorId: number;
-    nome: string;
-}
-
-interface DetailsBolsa {
-    bolsaId: number;
-    dataDeEntrada: string;
-    dataMensagem: string;
-    deletedAt: string | null;
-    fornecedora: Fornecedora;
-    fornecedoraId: number;
-    observacoes: string;
-    pecasCadastradas: Peca[];
-    quantidadeDePecasSemCadastro: number;
-    setor: Setor;
-    setorId: number;
-    statusDevolvida: boolean | null;
-    statusDoada: boolean;
-}
-
-interface Peca {
-    pecaCadastradaId: number;
-    codigoDaPeca: string;
-}
-
-// Tipagem para o formulário
-type FornecedoraFormData = {
-    codigo: string;
-    nome: string;
-    telefone?: string;
-};
+import {
+    useFornecedoras,
+    Fornecedora,
+    FornecedoraFormData,
+    FornecedoraFormModal,
+    FornecedoraDetailsModal,
+} from "../features/fornecedoras/index";
+import { useBolsas, Bolsa } from "../features/bolsas";
 
 export function Fornecedoras() {
-    const [fornecedoras, setFornecedoras] = useState<Fornecedora[]>([]);
     const [selectedFornecedora, setSelectedFornecedora] =
         useState<Fornecedora | null>(null);
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const [detailsData, setDetailsData] = useState<Bolsa[]>();
 
-    const [detailsData, setDetailsData] = useState<DetailsBolsa[]>();
-
+    const toast = useToast();
+    const {
+        isOpen: isFormOpen,
+        onOpen: onFormOpen,
+        onClose: onFormClose,
+    } = useDisclosure();
     const {
         isOpen: isDetailsOpen,
         onOpen: onDetailsOpen,
         onClose: onDetailsClose,
     } = useDisclosure();
 
-    const toast = useToast();
-    const { register, handleSubmit, reset, setValue } =
-        useForm<FornecedoraFormData>();
+    const {
+        fornecedoras,
+        isLoadingFornecedoras,
+        isErrorFornecedoras,
+        createFornecedora,
+        updateFornecedora,
+        deleteFornecedora,
+    } = useFornecedoras();
 
-    async function fetchFornecedoras() {
-        try {
-            const response = await api.get("/fornecedoras");
-            setFornecedoras(response.data);
-        } catch (error) {
-            toast({ title: "Erro ao buscar fornecedoras.", status: "error" });
-        }
-    }
-
-    async function handleSetStatusDevolvida(bolsaId: number) {
-        try {
-            const payload = {
-                statusDevolvida: false,
-                statusDoada: false,
-            };
-            await api.patch(`/bolsas/${bolsaId}/status`, payload);
-            toast({
-                title: "Status da bolsa alterado com sucesso!",
-                status: "success",
-            });
-        } catch {
-            toast({
-                title: "Erro ao alterar status da bolsa.",
-                status: "error",
-            });
-        }
-    }
+    const { setStatusBolsa, getDoadaEDevolvidaBolsas } = useBolsas();
 
     async function handleSave(data: FornecedoraFormData) {
-        try {
-            if (selectedFornecedora) {
-                await api.put(
-                    `/fornecedoras/${selectedFornecedora.fornecedoraId}`,
-                    data
-                );
-                toast({
-                    title: "Fornecedora atualizada com sucesso!",
-                    status: "success",
-                });
-            } else {
-                await api.post("/fornecedoras", data);
-                toast({
-                    title: "Fornecedora criada com sucesso!",
-                    status: "success",
-                });
-            }
-            resetModalAndFetch();
-        } catch (error) {
-            toast({ title: `Erro ao salvar fornecedora.`, status: "error" });
-        }
-    }
+        const onSuccess = (msg: string) => {
+            toast({ title: msg, status: "success" });
+            handleCloseForm();
+        };
+        const onError = (msg: string) => toast({ title: msg, status: "error" });
 
-    async function handleDelete(id: number) {
-        try {
-            await api.delete(`/fornecedoras/${id}`);
-            toast({
-                title: "Fornecedora deletada com sucesso!",
-                status: "warning",
+        if (selectedFornecedora) {
+            updateFornecedora(
+                {
+                    id: selectedFornecedora.fornecedoraId,
+                    dadosAtualizados: data,
+                },
+                {
+                    onSuccess: () =>
+                        onSuccess("Fornecedora atualizada com sucesso!"),
+                    onError: () => onError("Erro ao atualizar a fornecedora!"),
+                }
+            );
+        } else {
+            createFornecedora(data, {
+                onSuccess: () => onSuccess("Fornecedora criada com sucesso!"),
+                onError: () => onError("Erro ao criar a fornecedora!"),
             });
-            fetchFornecedoras();
-        } catch (error) {
-            toast({ title: "Erro ao deletar fornecedora.", status: "error" });
         }
     }
 
-    function openModal(fornecedora: Fornecedora | null = null) {
+    async function handleSetStatusReset(bolsaId: number) {
+        setStatusBolsa(
+            {
+                bolsaId,
+                payload: { statusDevolvida: false, statusDoada: false },
+            },
+            {
+                onSuccess: () =>
+                    toast({ title: "Status resetado!", status: "success" }),
+                onError: () =>
+                    toast({
+                        title: "Erro ao resetar status.",
+                        status: "error",
+                    }),
+            }
+        );
+    }
+
+    function handleOpenForm(fornecedora: Fornecedora | null = null) {
         setSelectedFornecedora(fornecedora);
-        if (fornecedora) {
-            setValue("codigo", fornecedora.codigo);
-            setValue("nome", fornecedora.nome);
-            setValue("telefone", fornecedora.telefone);
-        }
-        onOpen();
+        onFormOpen();
     }
 
-    async function openModalDetails(fornecedora: Fornecedora | null = null) {
+    function handleCloseForm() {
+        setSelectedFornecedora(null);
+        onFormClose();
+    }
+
+    async function handleOpenDetails(fornecedora: Fornecedora) {
         onDetailsOpen();
 
-        try {
-            if (fornecedora) {
-                const response = await api.get(
-                    `/bolsas/doadasEDevolvidas/${fornecedora.fornecedoraId}`
-                );
+        setDetailsData(undefined);
 
-                const data = response.data;
-
-                setDetailsData(data);
-                console.log("DADOS RECEBIDOS:", data);
-            }
-        } catch (err) {
-            console.error("Falha ao buscar detalhes:", err);
-        }
+        await getDoadaEDevolvidaBolsas(fornecedora.fornecedoraId, {
+            onSuccess: (data) => setDetailsData(data),
+            onError: () =>
+                toast({ title: "Erro ao carregar dados", status: "error" }),
+        });
     }
 
-    function resetModalAndFetch() {
-        reset({ codigo: "", nome: "", telefone: "" });
-        setSelectedFornecedora(null);
-        onClose();
-        fetchFornecedoras();
+    if (isLoadingFornecedoras) {
+        return (
+            <Flex justify="center" align="center" height="300px">
+                <Spinner size="xl" />
+            </Flex>
+        );
     }
 
-    function resetDetailsModalAndFetch() {
-        onDetailsClose();
+    if (isErrorFornecedoras) {
+        return (
+            <Alert
+                status="error"
+                variant="subtle"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                textAlign="center"
+                height="200px"
+                borderRadius="md"
+            >
+                <AlertIcon boxSize="40px" mr={0} />
+                <AlertTitle mt={4} mb={1} fontSize="lg">
+                    Opa! Ocorreu um erro
+                </AlertTitle>
+                <AlertDescription maxWidth="sm">
+                    Não foi possível buscar os dados.
+                </AlertDescription>
+            </Alert>
+        );
     }
-
-    useEffect(() => {
-        fetchFornecedoras();
-    }, []);
 
     return (
         <Box>
             <Flex justify="space-between" align="center" mb={6}>
                 <Heading>Gerenciar Fornecedoras</Heading>
-                <Button colorScheme="teal" onClick={() => openModal()}>
+                <Button colorScheme="teal" onClick={() => handleOpenForm()}>
                     Adicionar Fornecedora
                 </Button>
             </Flex>
@@ -215,10 +176,17 @@ export function Fornecedoras() {
                     </Tr>
                 </Thead>
                 <Tbody>
-                    {fornecedoras.map((f) => (
+                    {fornecedoras?.map((f) => (
                         <Tr key={f.fornecedoraId}>
                             <Td>{f.codigo || "N/A"}</Td>
-                            <Td onClick={() => openModalDetails(f)}>
+                            <Td
+                                cursor="pointer"
+                                _hover={{
+                                    textDecoration: "underline",
+                                    color: "blue.500",
+                                }}
+                                onClick={() => handleOpenDetails(f)}
+                            >
                                 {f.nome}
                             </Td>
                             <Td>{f.telefone || "N/A"}</Td>
@@ -227,7 +195,7 @@ export function Fornecedoras() {
                                     <IconButton
                                         aria-label="Editar"
                                         icon={<FaEdit />}
-                                        onClick={() => openModal(f)}
+                                        onClick={() => handleOpenForm(f)}
                                     />
                                 </HStack>
                             </Td>
@@ -236,166 +204,19 @@ export function Fornecedoras() {
                 </Tbody>
             </Table>
 
-            <Modal isOpen={isOpen} onClose={resetModalAndFetch}>
-                <ModalOverlay />
-                <ModalContent>
-                    <ModalHeader>
-                        {selectedFornecedora ? "Editar" : "Adicionar"}{" "}
-                        Fornecedora
-                    </ModalHeader>
-                    <ModalCloseButton />
-                    <form onSubmit={handleSubmit(handleSave)}>
-                        <ModalBody>
-                            <VStack spacing={4}>
-                                <Input
-                                    placeholder="Código (opcional)"
-                                    {...register("codigo")}
-                                />{" "}
-                                <Input
-                                    placeholder="Nome da Fornecedora"
-                                    {...register("nome", { required: true })}
-                                />
-                                <Input
-                                    placeholder="Telefone (opcional)"
-                                    {...register("telefone")}
-                                />
-                            </VStack>
-                        </ModalBody>
-                        <ModalFooter>
-                            <Button colorScheme="blue" mr={3} type="submit">
-                                Salvar
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                onClick={resetModalAndFetch}
-                            >
-                                Cancelar
-                            </Button>
-                        </ModalFooter>
-                    </form>
-                </ModalContent>
-            </Modal>
-            <Modal isOpen={isDetailsOpen} onClose={resetDetailsModalAndFetch}>
-                <ModalOverlay />
-                <ModalContent>
-                    <ModalHeader>Detalhes da Fornecedora</ModalHeader>
-                    <ModalCloseButton />
+            <FornecedoraFormModal
+                isOpen={isFormOpen}
+                onClose={handleCloseForm}
+                selectedFornecedora={selectedFornecedora}
+                onSave={handleSave}
+            />
 
-                    <ModalBody>
-                        <Heading size="md" mt={6} mb={3}>
-                            Bolsas Devolvidas
-                        </Heading>
-
-                        <Box
-                            maxH="200px"
-                            overflowY="auto"
-                            pr={4}
-                            borderWidth="1px"
-                            borderRadius="md"
-                            p={2}
-                        >
-                            {detailsData
-                                ?.filter(
-                                    (bolsa) => bolsa.statusDevolvida === true
-                                )
-                                .map((d) => (
-                                    <VStack
-                                        key={d.bolsaId}
-                                        spacing={1}
-                                        align="stretch"
-                                        mb={2}
-                                        p={2}
-                                        borderWidth={1}
-                                        borderRadius="md"
-                                        bg="gray.50"
-                                    >
-                                        <p>
-                                            <strong>
-                                                Quantidade de Pecas:
-                                            </strong>{" "}
-                                            {d.quantidadeDePecasSemCadastro}
-                                        </p>
-                                        <p>
-                                            <strong></strong>
-                                        </p>
-                                        <p>
-                                            <strong>Obs:</strong>{" "}
-                                            {d.observacoes || "N/A"}
-                                        </p>
-                                    </VStack>
-                                ))}
-
-                            {detailsData?.filter(
-                                (bolsa) => bolsa.statusDevolvida === true
-                            ).length === 0 && (
-                                <p>Nenhuma bolsa devolvida encontrada.</p>
-                            )}
-                        </Box>
-                        <Heading size="md" mt={6} mb={3}>
-                            Bolsas Doadas
-                        </Heading>
-
-                        <Box
-                            maxH="200px"
-                            overflowY="auto"
-                            pr={4}
-                            borderWidth="1px"
-                            borderRadius="md"
-                            p={2}
-                        >
-                            {detailsData
-                                ?.filter((bolsa) => bolsa.statusDoada === true)
-                                .map((d) => (
-                                    <VStack
-                                        key={d.bolsaId}
-                                        spacing={1}
-                                        align="stretch"
-                                        mb={2}
-                                        p={2}
-                                        borderWidth={1}
-                                        borderRadius="md"
-                                        bg="gray.50"
-                                    >
-                                        <p>
-                                            <strong>Bolsa ID:</strong>{" "}
-                                            {d.bolsaId}
-                                        </p>
-                                        <p>
-                                            <strong>Obs:</strong>{" "}
-                                            {d.observacoes || "N/A"}
-                                        </p>
-
-                                        <button
-                                            onClick={() => {
-                                                handleSetStatusDevolvida(
-                                                    d.bolsaId
-                                                );
-                                            }}
-                                        ></button>
-                                    </VStack>
-                                ))}
-
-                            {detailsData?.filter(
-                                (bolsa) => bolsa.statusDoada === true
-                            ).length === 0 && (
-                                <p>Nenhuma bolsa doada encontrada.</p>
-                            )}
-                        </Box>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button
-                            colorScheme="blue"
-                            mr={3}
-                            onClick={() => isDetailsOpen}
-                        >
-                            Salvar
-                        </Button>
-                        <Button variant="ghost" onClick={resetModalAndFetch}>
-                            Cancelar
-                        </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
+            <FornecedoraDetailsModal
+                isOpen={isDetailsOpen}
+                onClose={onDetailsClose}
+                detailsData={detailsData}
+                onResetBolsa={handleSetStatusReset}
+            />
         </Box>
     );
 }

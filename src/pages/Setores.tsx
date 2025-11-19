@@ -1,17 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     Box,
     Button,
     Flex,
     Heading,
-    Input,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
     Table,
     Tbody,
     Td,
@@ -20,100 +12,122 @@ import {
     Tr,
     useDisclosure,
     useToast,
-    VStack,
     HStack,
     IconButton,
+    Spinner,
+    Alert,
+    AlertIcon,
+    AlertTitle,
+    AlertDescription,
 } from "@chakra-ui/react";
-import { useForm } from "react-hook-form";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import { api } from "../services/api";
 
-interface Setor {
-    setorId: number;
-    nome: string;
-}
-
-type SetorFormData = {
-    nome: string;
-};
+import {
+    Setor,
+    SetorFormData,
+    useSetores,
+    SetorFormModal,
+} from "../features/setores/index";
 
 export function Setores() {
-    const [setores, setSetores] = useState<Setor[]>([]);
     const [selectedSetor, setSelectedSetor] = useState<Setor | null>(null);
+
     const { isOpen, onOpen, onClose } = useDisclosure();
     const toast = useToast();
-    const { register, handleSubmit, reset, setValue } =
-        useForm<SetorFormData>();
 
-    async function fetchSetores() {
-        try {
-            const response = await api.get("/setores");
-            setSetores(response.data);
-        } catch (error) {
-            toast({
-                title: "Erro ao buscar setores.",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
+    const {
+        setores,
+        isLoadingSetores,
+        isErrorSetores,
+        createSetor,
+        deleteSetor,
+        updateSetor,
+    } = useSetores();
+
+    async function handleSaveSetor(data: SetorFormData) {
+        const onSuccess = (msg: string) => {
+            toast({ title: msg, status: "success" });
+            handleCloseModal();
+        };
+        const onError = (msg: string) => toast({ title: msg, status: "error" });
+
+        if (selectedSetor) {
+            updateSetor(
+                { id: selectedSetor.setorId, dadosAtualizados: data },
+                {
+                    onSuccess: () => onSuccess("Setor atualizado com sucesso!"),
+                    onError: () => onError("Erro ao atualizar o setor"),
+                }
+            );
+        } else {
+            createSetor(data, {
+                onSuccess: () => onSuccess("Setor criado com sucesso!"),
+                onError: () => onError("Erro ao criar o setor"),
             });
         }
     }
 
-    async function handleSaveSetor(data: SetorFormData) {
-        try {
-            if (selectedSetor) {
-                await api.put(`/setores/${selectedSetor.setorId}`, data);
-                toast({
-                    title: "Setor atualizado com sucesso!",
-                    status: "success",
-                });
-            } else {
-                await api.post("/setores", data);
-                toast({
-                    title: "Setor criado com sucesso!",
-                    status: "success",
-                });
-            }
-            resetModalAndFetch();
-        } catch (error) {
-            toast({ title: `Erro ao salvar setor.`, status: "error" });
-        }
-    }
-
     async function handleDeleteSetor(id: number) {
-        try {
-            await api.delete(`/setores/${id}`);
-            toast({ title: "Setor deletado com sucesso!", status: "warning" });
-            fetchSetores();
-        } catch (error) {
-            toast({ title: "Erro ao deletar setor.", status: "error" });
-        }
+        if (!window.confirm("Tem certeza que quer apagar este setor, bo?"))
+            return;
+
+        deleteSetor(id, {
+            onSuccess: () =>
+                toast({
+                    title: "Setor deletado com sucesso!",
+                    status: "warning",
+                }),
+            onError: () =>
+                toast({ title: "Erro ao deletar setor.", status: "error" }),
+        });
     }
 
-    function openModal(setor: Setor | null = null) {
+    function handleOpenModal(setor: Setor | null = null) {
         setSelectedSetor(setor);
-        if (setor) {
-            setValue("nome", setor.nome);
-        }
         onOpen();
     }
 
-    function resetModalAndFetch() {
-        reset({ nome: "" });
+    function handleCloseModal() {
         setSelectedSetor(null);
         onClose();
-        fetchSetores();
     }
 
-    useEffect(() => {
-        fetchSetores();
-    }, []);
+    if (isLoadingSetores) {
+        return (
+            <Flex justify="center" align="center" height="300px">
+                <Spinner size="xl" color="teal.500" />
+            </Flex>
+        );
+    }
+
+    if (isErrorSetores) {
+        return (
+            <Alert
+                status="error"
+                variant="subtle"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                textAlign="center"
+                height="200px"
+                borderRadius="md"
+            >
+                <AlertIcon boxSize="40px" mr={0} />
+                <AlertTitle mt={4} mb={1} fontSize="lg">
+                    Opa! Ocorreu um erro
+                </AlertTitle>
+                <AlertDescription maxWidth="sm">
+                    Não foi possível carregar os setores.
+                </AlertDescription>
+            </Alert>
+        );
+    }
 
     return (
         <Box>
             <Flex justify="space-between" align="center" mb={6}>
                 <Heading>Gerenciar Setores</Heading>
-                <Button colorScheme="teal" onClick={() => openModal()}>
+                <Button colorScheme="teal" onClick={() => handleOpenModal()}>
                     Adicionar Setor
                 </Button>
             </Flex>
@@ -126,7 +140,7 @@ export function Setores() {
                     </Tr>
                 </Thead>
                 <Tbody>
-                    {setores.map((setor) => (
+                    {setores?.map((setor) => (
                         <Tr key={setor.setorId}>
                             <Td>{setor.nome}</Td>
                             <Td isNumeric>
@@ -134,7 +148,7 @@ export function Setores() {
                                     <IconButton
                                         aria-label="Editar"
                                         icon={<FaEdit />}
-                                        onClick={() => openModal(setor)}
+                                        onClick={() => handleOpenModal(setor)}
                                     />
                                     <IconButton
                                         aria-label="Deletar"
@@ -151,39 +165,12 @@ export function Setores() {
                 </Tbody>
             </Table>
 
-            <Modal isOpen={isOpen} onClose={resetModalAndFetch}>
-                <ModalOverlay />
-                <ModalContent>
-                    <ModalHeader>
-                        {selectedSetor
-                            ? "Editar Setor"
-                            : "Adicionar Novo Setor"}
-                    </ModalHeader>
-                    <ModalCloseButton />
-                    <form onSubmit={handleSubmit(handleSaveSetor)}>
-                        <ModalBody>
-                            <VStack spacing={4}>
-                                <Input
-                                    placeholder="Nome do Setor"
-                                    {...register("nome", { required: true })}
-                                />
-                            </VStack>
-                        </ModalBody>
-                        <ModalFooter>
-                            <Button colorScheme="blue" mr={3} type="submit">
-                                {" "}
-                                Salvar{" "}
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                onClick={resetModalAndFetch}
-                            >
-                                Cancelar
-                            </Button>
-                        </ModalFooter>
-                    </form>
-                </ModalContent>
-            </Modal>
+            <SetorFormModal
+                isOpen={isOpen}
+                onClose={handleCloseModal}
+                selectedSetor={selectedSetor}
+                onSave={handleSaveSetor}
+            />
         </Box>
     );
 }
