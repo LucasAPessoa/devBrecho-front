@@ -4,14 +4,6 @@ import {
     Button,
     Flex,
     Heading,
-    Input,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
     Table,
     Tbody,
     Td,
@@ -20,7 +12,6 @@ import {
     Tr,
     useDisclosure,
     useToast,
-    VStack,
     HStack,
     IconButton,
     Alert,
@@ -29,23 +20,33 @@ import {
     AlertTitle,
     AlertDescription,
 } from "@chakra-ui/react";
-import { useForm } from "react-hook-form";
 import { FaEdit } from "react-icons/fa";
 
 import {
     useFornecedoras,
     Fornecedora,
     FornecedoraFormData,
+    FornecedoraFormModal,
+    FornecedoraDetailsModal,
 } from "../features/fornecedoras/index";
-
 import { useBolsas, Bolsa } from "../features/bolsas";
 
 export function Fornecedoras() {
     const [selectedFornecedora, setSelectedFornecedora] =
         useState<Fornecedora | null>(null);
-    const { isOpen, onOpen, onClose } = useDisclosure();
-
     const [detailsData, setDetailsData] = useState<Bolsa[]>();
+
+    const toast = useToast();
+    const {
+        isOpen: isFormOpen,
+        onOpen: onFormOpen,
+        onClose: onFormClose,
+    } = useDisclosure();
+    const {
+        isOpen: isDetailsOpen,
+        onOpen: onDetailsOpen,
+        onClose: onDetailsClose,
+    } = useDisclosure();
 
     const {
         fornecedoras,
@@ -58,39 +59,13 @@ export function Fornecedoras() {
 
     const { setStatusBolsa, getDoadaEDevolvidaBolsas } = useBolsas();
 
-    const {
-        isOpen: isDetailsOpen,
-        onOpen: onDetailsOpen,
-        onClose: onDetailsClose,
-    } = useDisclosure();
-
-    const toast = useToast();
-
-    const { register, handleSubmit, reset, setValue } =
-        useForm<FornecedoraFormData>();
-
-    async function handleSetStatusReset(bolsaId: number) {
-        const payload = { statusDevolvida: false, statusDoada: false };
-        setStatusBolsa(
-            { bolsaId, payload },
-            {
-                onSuccess: () => {
-                    toast({
-                        title: "Status da bolsa alterado com sucesso!",
-                        status: "success",
-                    });
-                },
-                onError: () => {
-                    toast({
-                        title: "Erro ao alterar status da bolsa.",
-                        status: "error",
-                    });
-                },
-            }
-        );
-    }
-
     async function handleSave(data: FornecedoraFormData) {
+        const onSuccess = (msg: string) => {
+            toast({ title: msg, status: "success" });
+            handleCloseForm();
+        };
+        const onError = (msg: string) => toast({ title: msg, status: "error" });
+
         if (selectedFornecedora) {
             updateFornecedora(
                 {
@@ -99,89 +74,56 @@ export function Fornecedoras() {
                 },
                 {
                     onSuccess: () =>
-                        toast({
-                            title: "Fornecedora atualizada com sucesso!",
-                            status: "success",
-                        }),
-                    onError: () =>
-                        toast({
-                            title: "Erro ao atualizar a fornecedora!",
-                            status: "error",
-                        }),
+                        onSuccess("Fornecedora atualizada com sucesso!"),
+                    onError: () => onError("Erro ao atualizar a fornecedora!"),
                 }
             );
         } else {
             createFornecedora(data, {
-                onSuccess: () => {
-                    toast({
-                        title: "Fornecedora criada com sucesso!",
-                        status: "success",
-                    });
-                },
-                onError: () => {
-                    toast({
-                        title: "Erro ao criar a fornecedora!",
-                        status: "error",
-                    });
-                },
+                onSuccess: () => onSuccess("Fornecedora criada com sucesso!"),
+                onError: () => onError("Erro ao criar a fornecedora!"),
             });
         }
-        resetModalAndFetch();
     }
 
-    async function handleDelete(id: number) {
-        deleteFornecedora(id, {
-            onSuccess: () => {
-                toast({
-                    title: "Fornecedora deletada com sucesso!",
-                    status: "warning",
-                });
+    async function handleSetStatusReset(bolsaId: number) {
+        setStatusBolsa(
+            {
+                bolsaId,
+                payload: { statusDevolvida: false, statusDoada: false },
             },
-            onError: () => {
-                toast({
-                    title: "Erro ao deletar fornecedora.",
-                    status: "error",
-                });
-            },
-        });
+            {
+                onSuccess: () =>
+                    toast({ title: "Status resetado!", status: "success" }),
+                onError: () =>
+                    toast({
+                        title: "Erro ao resetar status.",
+                        status: "error",
+                    }),
+            }
+        );
     }
 
-    function openModal(fornecedora: Fornecedora | null = null) {
+    function handleOpenForm(fornecedora: Fornecedora | null = null) {
         setSelectedFornecedora(fornecedora);
-        if (fornecedora) {
-            setValue("codigo", fornecedora.codigo);
-            setValue("nome", fornecedora.nome);
-            setValue("telefone", fornecedora.telefone);
-        }
-        onOpen();
+        onFormOpen();
     }
 
-    async function openModalDetails(fornecedora: Fornecedora | null = null) {
+    function handleCloseForm() {
+        setSelectedFornecedora(null);
+        onFormClose();
+    }
+
+    async function handleOpenDetails(fornecedora: Fornecedora) {
         onDetailsOpen();
 
-        if (fornecedora) {
-            await getDoadaEDevolvidaBolsas(fornecedora.fornecedoraId, {
-                onSuccess: (data) => {
-                    setDetailsData(data);
-                },
-                onError: () => {
-                    toast({
-                        title: "Erro ao carregar doadas e devolvidas",
-                        status: "error",
-                    });
-                },
-            });
-        }
-    }
+        setDetailsData(undefined);
 
-    function resetModalAndFetch() {
-        reset({ codigo: "", nome: "", telefone: "" });
-        setSelectedFornecedora(null);
-        onClose();
-    }
-
-    function resetDetailsModalAndFetch() {
-        onDetailsClose();
+        await getDoadaEDevolvidaBolsas(fornecedora.fornecedoraId, {
+            onSuccess: (data) => setDetailsData(data),
+            onError: () =>
+                toast({ title: "Erro ao carregar dados", status: "error" }),
+        });
     }
 
     if (isLoadingFornecedoras) {
@@ -209,8 +151,7 @@ export function Fornecedoras() {
                     Opa! Ocorreu um erro
                 </AlertTitle>
                 <AlertDescription maxWidth="sm">
-                    Não foi possível buscar os dados. Tente recarregar a página
-                    ou peça ajuda de um desenvolvedor.
+                    Não foi possível buscar os dados.
                 </AlertDescription>
             </Alert>
         );
@@ -220,10 +161,11 @@ export function Fornecedoras() {
         <Box>
             <Flex justify="space-between" align="center" mb={6}>
                 <Heading>Gerenciar Fornecedoras</Heading>
-                <Button colorScheme="teal" onClick={() => openModal()}>
+                <Button colorScheme="teal" onClick={() => handleOpenForm()}>
                     Adicionar Fornecedora
                 </Button>
             </Flex>
+
             <Table variant="simple">
                 <Thead>
                     <Tr>
@@ -237,7 +179,14 @@ export function Fornecedoras() {
                     {fornecedoras?.map((f) => (
                         <Tr key={f.fornecedoraId}>
                             <Td>{f.codigo || "N/A"}</Td>
-                            <Td onClick={() => openModalDetails(f)}>
+                            <Td
+                                cursor="pointer"
+                                _hover={{
+                                    textDecoration: "underline",
+                                    color: "blue.500",
+                                }}
+                                onClick={() => handleOpenDetails(f)}
+                            >
                                 {f.nome}
                             </Td>
                             <Td>{f.telefone || "N/A"}</Td>
@@ -246,7 +195,7 @@ export function Fornecedoras() {
                                     <IconButton
                                         aria-label="Editar"
                                         icon={<FaEdit />}
-                                        onClick={() => openModal(f)}
+                                        onClick={() => handleOpenForm(f)}
                                     />
                                 </HStack>
                             </Td>
@@ -255,174 +204,19 @@ export function Fornecedoras() {
                 </Tbody>
             </Table>
 
-            <Modal isOpen={isOpen} onClose={resetModalAndFetch}>
-                <ModalOverlay />
-                <ModalContent>
-                    <ModalHeader>
-                        {selectedFornecedora ? "Editar" : "Adicionar"}{" "}
-                        Fornecedora
-                    </ModalHeader>
-                    <ModalCloseButton />
-                    <form onSubmit={handleSubmit(handleSave)}>
-                        <ModalBody>
-                            <VStack spacing={4}>
-                                <Input
-                                    placeholder="Código (opcional)"
-                                    {...register("codigo")}
-                                />{" "}
-                                <Input
-                                    placeholder="Nome da Fornecedora"
-                                    {...register("nome", { required: true })}
-                                />
-                                <Input
-                                    placeholder="Telefone (opcional)"
-                                    {...register("telefone")}
-                                />
-                            </VStack>
-                        </ModalBody>
-                        <ModalFooter>
-                            <Button colorScheme="blue" mr={3} type="submit">
-                                Salvar
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                onClick={resetModalAndFetch}
-                            >
-                                Cancelar
-                            </Button>
-                        </ModalFooter>
-                    </form>
-                </ModalContent>
-            </Modal>
-            <Modal isOpen={isDetailsOpen} onClose={resetDetailsModalAndFetch}>
-                <ModalOverlay />
-                <ModalContent>
-                    <ModalHeader>Detalhes da Fornecedora</ModalHeader>
-                    <ModalCloseButton />
+            <FornecedoraFormModal
+                isOpen={isFormOpen}
+                onClose={handleCloseForm}
+                selectedFornecedora={selectedFornecedora}
+                onSave={handleSave}
+            />
 
-                    <ModalBody>
-                        <Heading size="md" mt={6} mb={3}>
-                            Bolsas Devolvidas
-                        </Heading>
-
-                        <Box
-                            maxH="200px"
-                            overflowY="auto"
-                            pr={4}
-                            borderWidth="1px"
-                            borderRadius="md"
-                            p={2}
-                        >
-                            {detailsData
-                                ?.filter(
-                                    (bolsa) => bolsa.statusDevolvida === true
-                                )
-                                .map((d) => (
-                                    <VStack
-                                        key={d.bolsaId}
-                                        spacing={2}
-                                        align="stretch"
-                                        mb={2}
-                                        p={2}
-                                        borderWidth={1}
-                                        borderRadius="md"
-                                        bg="gray.50"
-                                    >
-                                        <p>
-                                            <strong>
-                                                Quantidade de Pecas:
-                                            </strong>{" "}
-                                            {d.quantidadeDePecasSemCadastro +
-                                                d.pecasCadastradas.length}
-                                        </p>
-
-                                        <p>
-                                            <strong>Obs:</strong>{" "}
-                                            {d.observacoes || "N/A"}
-                                        </p>
-                                        <button
-                                            color="blue"
-                                            onClick={() => {
-                                                handleSetStatusReset(d.bolsaId);
-                                            }}
-                                        >
-                                            Reset
-                                        </button>
-                                    </VStack>
-                                ))}
-
-                            {detailsData?.filter(
-                                (bolsa) => bolsa.statusDevolvida === true
-                            ).length === 0 && (
-                                <p>Nenhuma bolsa devolvida encontrada.</p>
-                            )}
-                        </Box>
-                        <Heading size="md" mt={6} mb={3}>
-                            Bolsas Doadas
-                        </Heading>
-
-                        <Box
-                            maxH="200px"
-                            overflowY="auto"
-                            pr={4}
-                            borderWidth="1px"
-                            borderRadius="md"
-                            p={2}
-                        >
-                            {detailsData
-                                ?.filter((bolsa) => bolsa.statusDoada === true)
-                                .map((d) => (
-                                    <VStack
-                                        key={d.bolsaId}
-                                        spacing={2}
-                                        align="stretch"
-                                        mb={2}
-                                        p={2}
-                                        borderWidth={1}
-                                        borderRadius="md"
-                                        bg="gray.50"
-                                    >
-                                        <p>
-                                            <strong>Bolsa ID:</strong>{" "}
-                                            {d.bolsaId}
-                                        </p>
-                                        <p>
-                                            <strong>Obs:</strong>{" "}
-                                            {d.observacoes || "N/A"}
-                                        </p>
-
-                                        <button
-                                            color="blue"
-                                            onClick={() => {
-                                                handleSetStatusReset(d.bolsaId);
-                                            }}
-                                        >
-                                            Reset
-                                        </button>
-                                    </VStack>
-                                ))}
-
-                            {detailsData?.filter(
-                                (bolsa) => bolsa.statusDoada === true
-                            ).length === 0 && (
-                                <p>Nenhuma bolsa doada encontrada.</p>
-                            )}
-                        </Box>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button
-                            colorScheme="blue"
-                            mr={3}
-                            onClick={() => isDetailsOpen}
-                        >
-                            Salvar
-                        </Button>
-                        <Button variant="ghost" onClick={resetModalAndFetch}>
-                            Cancelar
-                        </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
+            <FornecedoraDetailsModal
+                isOpen={isDetailsOpen}
+                onClose={onDetailsClose}
+                detailsData={detailsData}
+                onResetBolsa={handleSetStatusReset}
+            />
         </Box>
     );
 }
