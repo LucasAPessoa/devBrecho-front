@@ -19,7 +19,7 @@ import {
 
 import { Controller, useForm } from "react-hook-form";
 
-import { BolsaFormData, Bolsa } from "./../index";
+import { BolsaFormData, Bolsa } from "../index";
 
 import { Setor } from "../../setores";
 import { Fornecedora } from "../../fornecedoras";
