@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import * as bolsasApi from "../services/bolsas.api";
 
-export const useBolsas = () => {
+export const useBolsas = (query?: string) => {
     const queryClient = useQueryClient();
 
     const {
@@ -11,8 +11,8 @@ export const useBolsas = () => {
         isError,
         error,
     } = useQuery({
-        queryKey: ["bolsas"],
-        queryFn: bolsasApi.getAllBolsas,
+        queryKey: ["bolsas", query],
+        queryFn: () => bolsasApi.getAllBolsas(query || ""),
     });
 
     const { mutate: createBolsa, isPending: isCreating } = useMutation({
