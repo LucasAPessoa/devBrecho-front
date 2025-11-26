@@ -1,13 +1,17 @@
 import { Input, InputGroup, InputRightElement } from "@chakra-ui/react";
 import { SearchIcon } from "@chakra-ui/icons";
 
-interface SearchBarProps {
+interface SearchComponentProps {
     value: string;
     onChange: (newValue: string) => void;
     onSearch: () => void;
 }
 
-export function SearchBar({ value, onChange, onSearch }: SearchBarProps) {
+export function SearchComponent({
+    value,
+    onChange,
+    onSearch,
+}: SearchComponentProps) {
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") {
             onSearch();
