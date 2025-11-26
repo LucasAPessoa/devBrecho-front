@@ -14,7 +14,7 @@ import { useFornecedoras } from "../features/fornecedoras";
 import { useSetores } from "../features/setores";
 
 import { useBolsasPageLogic } from "../features/bolsas";
-import { SearchBar } from "../shared/ui/Input/SearchBar";
+import { SearchComponent } from "../shared/ui/Components/SearchComponent";
 
 export function Bolsas() {
     const { fornecedoras } = useFornecedoras();
@@ -54,7 +54,7 @@ export function Bolsas() {
                         Adicionar Bolsa
                     </Button>
 
-                    <SearchBar
+                    <SearchComponent
                         value={logic.searchValue}
                         onChange={logic.setSearchValue}
                         onSearch={logic.handleSearch}
