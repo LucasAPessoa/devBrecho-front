@@ -54,7 +54,6 @@ export function Fornecedoras() {
         isErrorFornecedoras,
         createFornecedora,
         updateFornecedora,
-        deleteFornecedora,
     } = useFornecedoras();
 
     const { setStatusBolsa, getDoadaEDevolvidaBolsas } = useBolsas();
