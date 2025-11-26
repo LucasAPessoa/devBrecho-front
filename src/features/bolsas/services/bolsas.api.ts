@@ -6,8 +6,10 @@ export const createBolsa = async (novaBolsa: BolsaFormData): Promise<Bolsa> => {
     return data;
 };
 
-export const getAllBolsas = async (): Promise<Bolsa[]> => {
-    const { data } = await api.get<Bolsa[]>("/bolsas");
+export const getAllBolsas = async (query?: string): Promise<Bolsa[]> => {
+    const { data } = await api.get<Bolsa[]>("/bolsas", {
+        params: { query },
+    });
     return data;
 };
 
@@ -42,5 +44,12 @@ export const getDoadaEDevolvidaBolsas = async (
     const { data } = await api.get<Bolsa[]>(
         `/bolsas/doadasEDevolvidas/${fornecedoraId}`
     );
+    return data;
+};
+
+export const searchBolsas = async (query: string): Promise<Bolsa[]> => {
+    const { data } = await api.get<Bolsa[]>("/bolsas/search/", {
+        params: { query },
+    });
     return data;
 };

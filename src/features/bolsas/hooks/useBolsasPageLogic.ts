@@ -7,7 +7,18 @@ export function useBolsasPageLogic() {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const toast = useToast();
 
-    const { createBolsa, updateBolsa, setStatusBolsa } = useBolsas();
+    const [searchValue, setSearchValue] = useState("");
+
+    const [appliedSearch, setAppliedSearch] = useState("");
+
+    const {
+        bolsas,
+        isLoadingBolsas,
+        isErrorBolsas,
+        createBolsa,
+        updateBolsa,
+        setStatusBolsa,
+    } = useBolsas(appliedSearch);
 
     function handleOpenModal(bolsa: Bolsa | null = null) {
         setSelectedBolsa(bolsa);
@@ -79,12 +90,23 @@ export function useBolsasPageLogic() {
         );
     }
 
+    function handleSearch() {
+        setAppliedSearch(searchValue);
+    }
+
     return {
+        bolsas,
+        isLoadingBolsas,
+        isErrorBolsas,
         selectedBolsa,
         isOpen,
         handleOpenModal,
         handleCloseModal,
         handleSave,
         handleStatusChange,
+        handleSearch,
+        searchValue,
+        setSearchValue,
+        appliedSearch,
     };
 }
