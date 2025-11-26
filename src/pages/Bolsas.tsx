@@ -9,12 +9,12 @@ import {
     AlertTitle,
 } from "@chakra-ui/react";
 import { useSortableData } from "../shared/hooks/useSortableData";
-import { useBolsas, BolsasTable, BolsaFormModal } from "../features/bolsas";
+import { BolsasTable, BolsaFormModal } from "../features/bolsas";
 import { useFornecedoras } from "../features/fornecedoras";
 import { useSetores } from "../features/setores";
 
 import { useBolsasPageLogic } from "../features/bolsas";
-import { SearchBar } from "../shared/ui/Input/searchBar";
+import { SearchBar } from "../shared/ui/Input/SearchBar";
 
 export function Bolsas() {
     const { fornecedoras } = useFornecedoras();
