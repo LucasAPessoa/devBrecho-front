@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react";
 
-const getNestedValue = (obj: any, path: string) => {
-    return path.split(".").reduce((acc, part) => acc && acc[part], obj);
-};
+function getNestedValue<T>(obj: T, path: string): any {
+    return path
+        .split(".")
+        .reduce((acc, part) => acc && (acc as any)[part], obj);
+}
 
 export const useSortableData = <T extends object>(
     items: T[],

@@ -14,25 +14,25 @@ import { useFornecedoras } from "../features/fornecedoras";
 import { useSetores } from "../features/setores";
 
 import { useBolsasPageLogic } from "../features/bolsas";
+import { SearchBar } from "../shared/ui/Input/searchBar";
 
 export function Bolsas() {
-    const { bolsas, isLoadingBolsas, isErrorBolsas } = useBolsas();
     const { fornecedoras } = useFornecedoras();
     const { setores } = useSetores();
 
     const logic = useBolsasPageLogic();
 
     const { sortedData, requestSort, sortConfig } = useSortableData(
-        bolsas || []
+        logic.bolsas || []
     );
 
-    if (isLoadingBolsas)
+    if (logic.isLoadingBolsas)
         return (
             <Flex justify="center" h="300px">
                 <Spinner size="xl" />
             </Flex>
         );
-    if (isErrorBolsas)
+    if (logic.isErrorBolsas)
         return (
             <Alert status="error">
                 <AlertIcon />
@@ -45,12 +45,21 @@ export function Bolsas() {
             <Flex justify="space-between" align="center" mb={6}>
                 <Heading>Gerenciar Bolsas</Heading>
 
-                <Button
-                    colorScheme="teal"
-                    onClick={() => logic.handleOpenModal()}
-                >
-                    Adicionar Bolsa
-                </Button>
+                <Flex gap={10} align="center">
+                    <Button
+                        px={10}
+                        colorScheme="teal"
+                        onClick={() => logic.handleOpenModal()}
+                    >
+                        Adicionar Bolsa
+                    </Button>
+
+                    <SearchBar
+                        value={logic.searchValue}
+                        onChange={logic.setSearchValue}
+                        onSearch={logic.handleSearch}
+                    />
+                </Flex>
             </Flex>
 
             <BolsasTable

@@ -38,6 +38,21 @@ interface BolsasTableProps {
     ) => void;
 }
 
+const SortIcon = ({
+    columnKey,
+    sortConfig,
+}: {
+    columnKey: string;
+    sortConfig: { key: string; direction: string };
+}) => {
+    if (sortConfig.key !== columnKey) return null;
+    return sortConfig.direction === "asc" ? (
+        <FaSortUp style={{ display: "inline", marginLeft: 4 }} />
+    ) : (
+        <FaSortDown style={{ display: "inline", marginLeft: 4 }} />
+    );
+};
+
 export function BolsasTable({
     bolsas,
     sortConfig,
@@ -45,15 +60,6 @@ export function BolsasTable({
     onEdit,
     onStatusChange,
 }: BolsasTableProps) {
-    const SortIcon = ({ columnKey }: { columnKey: string }) => {
-        if (sortConfig.key !== columnKey) return null;
-        return sortConfig.direction === "asc" ? (
-            <FaSortUp style={{ display: "inline", marginLeft: 4 }} />
-        ) : (
-            <FaSortDown style={{ display: "inline", marginLeft: 4 }} />
-        );
-    };
-
     return (
         <Table variant="simple">
             <Thead>
@@ -64,7 +70,11 @@ export function BolsasTable({
                             userSelect="none"
                             onClick={() => requestSort("setor.nome")}
                         >
-                            Setor <SortIcon columnKey="setor.nome" />
+                            Setor{" "}
+                            <SortIcon
+                                columnKey="setor.nome"
+                                sortConfig={sortConfig}
+                            />
                         </Th>
                         <Th
                             cursor="pointer"
@@ -72,7 +82,10 @@ export function BolsasTable({
                             onClick={() => requestSort("fornecedora.codigo")}
                         >
                             Cód. Fornecedora{" "}
-                            <SortIcon columnKey="fornecedora.codigo" />
+                            <SortIcon
+                                columnKey="setor.nome"
+                                sortConfig={sortConfig}
+                            />
                         </Th>
                         <Th
                             cursor="pointer"
@@ -80,7 +93,10 @@ export function BolsasTable({
                             onClick={() => requestSort("fornecedora.nome")}
                         >
                             Fornecedora{" "}
-                            <SortIcon columnKey="fornecedora.nome" />
+                            <SortIcon
+                                columnKey="setor.nome"
+                                sortConfig={sortConfig}
+                            />
                         </Th>
 
                         <Th>Peças Cadastradas</Th>
@@ -90,7 +106,11 @@ export function BolsasTable({
                             userSelect="none"
                             onClick={() => requestSort("dataMensagem")}
                         >
-                            Data Mensagem <SortIcon columnKey="dataMensagem" />
+                            Data Mensagem{" "}
+                            <SortIcon
+                                columnKey="setor.nome"
+                                sortConfig={sortConfig}
+                            />
                         </Th>
 
                         <Th
@@ -98,7 +118,11 @@ export function BolsasTable({
                             userSelect="none"
                             onClick={() => requestSort("dataMensagem")}
                         >
-                            Prazo <SortIcon columnKey="dataMensagem" />
+                            Prazo
+                            <SortIcon
+                                columnKey="setor.nome"
+                                sortConfig={sortConfig}
+                            />
                         </Th>
 
                         <Th>Status</Th>
