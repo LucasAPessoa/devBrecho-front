@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import * as fornecedorasApi from "../services/fornecedoras.api";
 
-export const useFornecedoras = () => {
+export const useFornecedoras = (query?: string) => {
     const queryClient = useQueryClient();
 
     const {
@@ -11,8 +11,8 @@ export const useFornecedoras = () => {
         isError,
         error,
     } = useQuery({
-        queryKey: ["fornecedoras"],
-        queryFn: fornecedorasApi.getAllFornecedoras,
+        queryKey: ["fornecedoras", query],
+        queryFn: () => fornecedorasApi.getAllFornecedoras(query || ""),
     });
 
     const { mutate: createFornecedora, isPending: isCreating } = useMutation({
