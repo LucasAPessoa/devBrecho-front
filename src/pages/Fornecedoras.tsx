@@ -30,11 +30,16 @@ import {
     FornecedoraDetailsModal,
 } from "../features/fornecedoras/index";
 import { useBolsas, Bolsa } from "../features/bolsas";
+import { SearchComponent } from "../shared/ui/Components/SearchComponent";
 
 export function Fornecedoras() {
     const [selectedFornecedora, setSelectedFornecedora] =
         useState<Fornecedora | null>(null);
     const [detailsData, setDetailsData] = useState<Bolsa[]>();
+
+    const [searchValue, setSearchValue] = useState("");
+
+    const [appliedSearch, setAppliedSearch] = useState("");
 
     const toast = useToast();
     const {
@@ -54,7 +59,7 @@ export function Fornecedoras() {
         isErrorFornecedoras,
         createFornecedora,
         updateFornecedora,
-    } = useFornecedoras();
+    } = useFornecedoras(appliedSearch);
 
     const { setStatusBolsa, getDoadaEDevolvidaBolsas } = useBolsas();
 
@@ -125,6 +130,10 @@ export function Fornecedoras() {
         });
     }
 
+    function handleSearch() {
+        setAppliedSearch(searchValue);
+    }
+
     if (isLoadingFornecedoras) {
         return (
             <Flex justify="center" align="center" height="300px">
@@ -160,9 +169,16 @@ export function Fornecedoras() {
         <Box>
             <Flex justify="space-between" align="center" mb={6}>
                 <Heading>Gerenciar Fornecedoras</Heading>
-                <Button colorScheme="teal" onClick={() => handleOpenForm()}>
-                    Adicionar Fornecedora
-                </Button>
+                <Flex gap={10} align="center">
+                    <SearchComponent
+                        value={searchValue}
+                        onChange={setSearchValue}
+                        onSearch={handleSearch}
+                    />
+                    <Button colorScheme="teal" onClick={() => handleOpenForm()}>
+                        Adicionar Fornecedora
+                    </Button>
+                </Flex>
             </Flex>
 
             <Table variant="simple">

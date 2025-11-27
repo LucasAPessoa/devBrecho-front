@@ -11,8 +11,12 @@ export const createFornecedora = async (
     return data;
 };
 
-export const getAllFornecedoras = async (): Promise<Fornecedora[]> => {
-    const { data } = await api.get<Fornecedora[]>("/fornecedoras");
+export const getAllFornecedoras = async (
+    query?: string
+): Promise<Fornecedora[]> => {
+    const { data } = await api.get<Fornecedora[]>("/fornecedoras", {
+        params: { query },
+    });
     return data;
 };
 
