@@ -104,8 +104,8 @@ export function BolsaFormModal({
                                         key={f.fornecedoraId}
                                         value={f.fornecedoraId}
                                     >
-                                        {f.codigo ? `${f.codigo} - ` : ""}
-                                        {f.nome}
+                                        {`${f.nome} - `}
+                                        {`${f.codigo} `}
                                     </option>
                                 ))}
                             </Select>
