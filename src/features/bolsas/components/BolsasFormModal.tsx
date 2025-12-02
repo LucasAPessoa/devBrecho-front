@@ -35,6 +35,12 @@ interface BolsaFormModalProps {
     setores: Setor[];
     fornecedoras: Fornecedora[];
 }
+
+type OptionType = {
+    value: number;
+    label: string;
+};
+
 export function BolsaFormModal({
     isOpen,
     onClose,
@@ -94,33 +100,51 @@ export function BolsaFormModal({
                 <form onSubmit={handleSubmit(handleFormSubmit)}>
                     <ModalBody>
                         <VStack spacing={4}>
-                            <Select
-                                placeholder="Selecione um Setor"
-                                options={setoresFormatadas}
-                            >
-                                {/* {setores?.map((s) => (
-                                    <option key={s.setorId} value={s.setorId}>
-                                        {s.nome}
-                                    </option>
-                                ))} */}
-                            </Select>
-                            <Select
-                                placeholder="Selecione uma Fornecedora"
-                                options={fornecedorasFormatadas}
-                                // {...register("fornecedoraId", {
-                                //     required: true,
-                                // })}
-                            >
-                                {/* {fornecedoras?.map((f) => (
-                                    <option
-                                        key={f.fornecedoraId}
-                                        value={f.fornecedoraId}
-                                    >
-                                        {`${f.codigo} - `}
-                                        {`${f.nome}`}
-                                    </option>
-                                 ))}  */}
-                            </Select>
+                            <FormControl isRequired>
+                                {" "}
+                                <FormLabel>Setor</FormLabel>
+                                <Controller
+                                    name="setorId"
+                                    control={control}
+                                    render={({
+                                        field: { onChange, value, ref },
+                                    }) => (
+                                        <Select<OptionType>
+                                            ref={ref}
+                                            placeholder="Selecione um Setor"
+                                            options={setoresFormatadas}
+                                            value={setoresFormatadas.find(
+                                                (c) => c.value === value
+                                            )}
+                                            onChange={(val) =>
+                                                onChange(val?.value)
+                                            }
+                                        />
+                                    )}
+                                />
+                            </FormControl>
+                            <FormControl isRequired>
+                                <FormLabel>Fornecedora</FormLabel>
+                                <Controller
+                                    name="fornecedoraId"
+                                    control={control}
+                                    render={({
+                                        field: { onChange, value, ref },
+                                    }) => (
+                                        <Select<OptionType>
+                                            ref={ref}
+                                            placeholder="Selecione uma Fornecedora"
+                                            options={fornecedorasFormatadas}
+                                            value={fornecedorasFormatadas.find(
+                                                (c) => c.value === value
+                                            )}
+                                            onChange={(val) =>
+                                                onChange(val?.value)
+                                            }
+                                        />
+                                    )}
+                                />
+                            </FormControl>
                             <Controller
                                 name="quantidadeDePecasSemCadastro"
                                 control={control}
