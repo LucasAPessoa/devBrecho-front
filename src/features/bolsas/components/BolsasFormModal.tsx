@@ -6,7 +6,6 @@ import {
     ModalCloseButton,
     ModalBody,
     VStack,
-    Select,
     NumberInput,
     NumberInputField,
     FormControl,
@@ -16,6 +15,8 @@ import {
     Button,
     Input,
 } from "@chakra-ui/react";
+
+import Select from "react-select";
 
 import { Controller, useForm } from "react-hook-form";
 
@@ -44,6 +45,16 @@ export function BolsaFormModal({
 }: BolsaFormModalProps) {
     const { register, handleSubmit, reset, setValue, control } =
         useForm<BolsaFormData>();
+
+    const fornecedorasFormatadas = fornecedoras.map((item) => ({
+        value: item.fornecedoraId,
+        label: item.codigo + " - " + item.nome,
+    }));
+
+    const setoresFormatadas = setores.map((item) => ({
+        value: item.setorId,
+        label: item.nome,
+    }));
 
     useEffect(() => {
         if (isOpen) {
@@ -85,21 +96,22 @@ export function BolsaFormModal({
                         <VStack spacing={4}>
                             <Select
                                 placeholder="Selecione um Setor"
-                                {...register("setorId", { required: true })}
+                                options={setoresFormatadas}
                             >
-                                {setores?.map((s) => (
+                                {/* {setores?.map((s) => (
                                     <option key={s.setorId} value={s.setorId}>
                                         {s.nome}
                                     </option>
-                                ))}
+                                ))} */}
                             </Select>
                             <Select
                                 placeholder="Selecione uma Fornecedora"
-                                {...register("fornecedoraId", {
-                                    required: true,
-                                })}
+                                options={fornecedorasFormatadas}
+                                // {...register("fornecedoraId", {
+                                //     required: true,
+                                // })}
                             >
-                                {fornecedoras?.map((f) => (
+                                {/* {fornecedoras?.map((f) => (
                                     <option
                                         key={f.fornecedoraId}
                                         value={f.fornecedoraId}
@@ -107,11 +119,12 @@ export function BolsaFormModal({
                                         {`${f.codigo} - `}
                                         {`${f.nome}`}
                                     </option>
-                                ))}
+                                 ))}  */}
                             </Select>
                             <Controller
                                 name="quantidadeDePecasSemCadastro"
                                 control={control}
+                                defaultValue={0}
                                 render={({ field }) => (
                                     <NumberInput {...field}>
                                         <NumberInputField placeholder="Peças sem cadastro" />
@@ -126,7 +139,7 @@ export function BolsaFormModal({
                                     id="dataMensagem"
                                     type="date"
                                     {...register("dataMensagem", {
-                                        required: true,
+                                        required: false,
                                     })}
                                 />
                             </FormControl>
