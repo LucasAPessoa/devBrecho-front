@@ -112,6 +112,7 @@ export function BolsaFormModal({
                             <Controller
                                 name="quantidadeDePecasSemCadastro"
                                 control={control}
+                                defaultValue={0}
                                 render={({ field }) => (
                                     <NumberInput {...field}>
                                         <NumberInputField placeholder="Peças sem cadastro" />
@@ -126,7 +127,7 @@ export function BolsaFormModal({
                                     id="dataMensagem"
                                     type="date"
                                     {...register("dataMensagem", {
-                                        required: true,
+                                        required: false,
                                     })}
                                 />
                             </FormControl>
