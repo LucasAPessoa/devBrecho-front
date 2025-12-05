@@ -3,6 +3,7 @@ import { Layout } from "./shared/ui/Navigation/Layout";
 import { Setores } from "./pages/Setores";
 import { Fornecedoras } from "./pages/Fornecedoras";
 import { Bolsas } from "./pages/Bolsas";
+import { Prazos } from "./pages/Prazos";
 
 function App() {
     return (
@@ -12,6 +13,7 @@ function App() {
                 <Route path="/setores" element={<Setores />} />
                 <Route path="/fornecedoras" element={<Fornecedoras />} />
                 <Route path="/bolsas" element={<Bolsas />} />
+                <Route path="/prazos" element={<Prazos />} />
             </Route>
         </Routes>
     );
