@@ -52,6 +52,13 @@ export const useBolsas = (query?: string) => {
         mutationFn: bolsasApi.getDoadaEDevolvidaBolsas,
     });
 
+    const {
+        mutateAsync: getBolsaGroupedByDataMensagem,
+        isPending: isGettingBolsaGroupedByDataMensagem,
+    } = useMutation({
+        mutationFn: bolsasApi.getBolsaGroupedByDataMensagem,
+    });
+
     return {
         bolsas,
         isLoadingBolsas: isLoading,
@@ -68,5 +75,7 @@ export const useBolsas = (query?: string) => {
         isChangingStatusBolsa: isChangingStatus,
         getDoadaEDevolvidaBolsas,
         isGettingDoadasEDevolvidas,
+        getBolsaGroupedByDataMensagem,
+        isGettingBolsaGroupedByDataMensagem,
     };
 };

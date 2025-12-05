@@ -155,7 +155,7 @@ export function BolsaFormModal({
                                     </NumberInput>
                                 )}
                             />
-                            <FormControl isRequired>
+                            <FormControl>
                                 <FormLabel htmlFor="dataMensagem">
                                     Data da Mensagem
                                 </FormLabel>
@@ -163,7 +163,9 @@ export function BolsaFormModal({
                                     id="dataMensagem"
                                     type="date"
                                     {...register("dataMensagem", {
-                                        required: false,
+                                        setValueAs: (value) => {
+                                            return value === "" ? null : value;
+                                        },
                                     })}
                                 />
                             </FormControl>
