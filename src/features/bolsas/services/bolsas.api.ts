@@ -53,3 +53,18 @@ export const searchBolsas = async (query: string): Promise<Bolsa[]> => {
     });
     return data;
 };
+
+export const getBolsaGroupedByDataMensagem = async (): Promise<
+    {
+        date: string;
+        bolsas: Bolsa[];
+    }[]
+> => {
+    const { data } = await api.get<
+        {
+            date: string;
+            bolsas: Bolsa[];
+        }[]
+    >("/bolsas/groupedByDataMensagem");
+    return data;
+};
