@@ -53,9 +53,15 @@ export function PrazosTable({
         return <Text>Nenhum prazo encontrado.</Text>;
     }
 
+    const filteredBolsas = groupedBolsas.filter((grupo) => grupo.date !== null);
+
+    const orderedBolsas = filteredBolsas.sort((a, b) => {
+        return a.date.localeCompare(b.date);
+    });
+
     return (
         <VStack spacing={8} align="stretch" w="100%">
-            {groupedBolsas.map((grupo) => (
+            {orderedBolsas.map((grupo) => (
                 <Box
                     key={grupo.date}
                     p={4}
@@ -67,7 +73,7 @@ export function PrazosTable({
                     <HStack mb={4} spacing={2}>
                         <FaCalendarAlt color="gray" />
                         <Text fontSize="lg" fontWeight="bold" color="gray.700">
-                            Prazo: {calculatePrazo(grupo.date) || "Sem Prazo"}
+                            Prazo: {calculatePrazo(grupo.date)}
                         </Text>
                         <Badge colorScheme="red" ml={2}>
                             {" "}
