@@ -1,11 +1,7 @@
-import { DATA_LIMITE_LEGADO, PRAZO_DIAS_PADRAO } from "./constants";
+export function formatDate(date: string | null): string | null {
+    if (!date) return null;
 
-export function formatDate(date: string): string {
     const inputDate = new Date(date);
-
-    if (isNaN(inputDate.getTime()) || inputDate < DATA_LIMITE_LEGADO) {
-        return "";
-    }
 
     return inputDate.toLocaleDateString("pt-BR", {
         timeZone: "UTC",
@@ -27,12 +23,8 @@ export function toInputDate(date: string | Date): string {
 export function calculatePrazo(dateMnsg: string) {
     const inputDate = new Date(dateMnsg);
 
-    if (isNaN(inputDate.getTime()) || inputDate < DATA_LIMITE_LEGADO) {
-        return "";
-    }
-
     const prazoDate = new Date(inputDate);
-    prazoDate.setDate(prazoDate.getDate() + PRAZO_DIAS_PADRAO);
+    prazoDate.setDate(prazoDate.getDate() + 15);
 
     return prazoDate.toLocaleDateString("pt-BR", {
         timeZone: "UTC",
