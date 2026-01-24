@@ -6,6 +6,21 @@ export const api = axios.create({
     baseURL,
 });
 
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem("token");
+
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
 api.interceptors.response.use(
     (response) => response,
     (error) => {
@@ -14,7 +29,9 @@ api.interceptors.response.use(
 
             if (status === 401) {
                 console.warn("Sessão expirada");
-                //TODO:Redireccionar a login
+                localStorage.removeItem("token");
+                window.location.href = "/";
+                return;
             }
 
             if (status === 500) {
