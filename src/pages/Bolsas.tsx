@@ -23,7 +23,7 @@ export function Bolsas() {
     const logic = useBolsasPageLogic();
 
     const { sortedData, requestSort, sortConfig } = useSortableData(
-        logic.bolsas || []
+        logic.bolsas || [],
     );
 
     if (logic.isLoadingBolsas)
